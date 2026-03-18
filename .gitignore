@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Root-level environments and secrets
+.env
+.env.local
+.env.*.local
+.venv/
+venv/
+
+# Python artifacts (backend/ml_training)
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Backend virtualenv
+backend/venv/
+
+# ML training artifacts
+ml_training/data/processed/
+outputs/
+
+# Node artifacts (frontend)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+frontend/.turbo/
+frontend/.vercel/
+frontend/*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

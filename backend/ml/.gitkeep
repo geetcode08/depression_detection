@@ -1,0 +1,2 @@
+# ML model artifacts directory
+# Place model.pkl and vectorizer.pkl here after running ml_training scripts
