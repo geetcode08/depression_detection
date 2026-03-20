@@ -27,6 +27,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (username.length < 2) {
+      setError("Username must be at least 2 characters.");
+      return;
+    }
+
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -138,7 +143,7 @@ export default function RegisterPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Creating account...
                 </>
               ) : (

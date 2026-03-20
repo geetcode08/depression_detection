@@ -278,3 +278,32 @@ function delay(ms: number) {
 }
 
 export default api;
+
+// Extended analysis API with history
+export const analysisHistoryApi = {
+  history: async (limit = 50): Promise<any[]> => {
+    if (USE_MOCK) {
+      await delay(300);
+      return []; // Empty for mock — no history yet
+    }
+    const res = await api.get(`/analyze/history?limit=${limit}`);
+    return res.data;
+  },
+
+  analyzeSession: async (sessionId: number): Promise<any> => {
+    if (USE_MOCK) {
+      await delay(300);
+      return {};
+    }
+    const res = await api.get(`/analyze/session/${sessionId}`);
+    return res.data;
+  },
+
+  deleteAccount: async (): Promise<void> => {
+    if (USE_MOCK) {
+      await delay(500);
+      return;
+    }
+    await api.delete("/auth/me");
+  },
+};

@@ -1,8 +1,9 @@
 // ============================================================
-// Shared TypeScript Interfaces — Depression AI System Frontend
+// Shared TypeScript interfaces — used across frontend
 // ============================================================
 
-// --- User ---
+export type RiskLabel = "low" | "medium" | "high";
+
 export interface User {
   id: number;
   username: string;
@@ -12,30 +13,9 @@ export interface User {
   created_at: string;
 }
 
-// --- Auth ---
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  access_token: string;
-  token_type: "bearer";
-}
-
-// --- Chat ---
-export type RiskLabel = "low" | "medium" | "high";
-export type MessageRole = "user" | "assistant";
-
 export interface AnalysisResult {
-  sentiment_score: number; // -1.0 to 1.0
-  risk_score: number; // 0.0 to 1.0
+  sentiment_score: number;
+  risk_score: number;
   risk_label: RiskLabel;
   top_keywords: string[];
   confidence: number;
@@ -43,25 +23,35 @@ export interface AnalysisResult {
 }
 
 export interface ChatMessage {
-  id: number;
-  session_id: number;
-  user_id: number;
-  role: MessageRole;
+  id: string;
+  role: "user" | "assistant";
   content: string;
-  sentiment_score: number | null;
-  depression_risk_score: number | null;
-  risk_label: RiskLabel | null;
-  emotion_label: string | null;
-  message_length: number;
   created_at: string;
-  // Frontend-only fields
   analysis?: AnalysisResult;
   crisis_alert?: boolean;
 }
 
+// ---- Auth ----
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+}
+
+// ---- Chat ----
 export interface ChatSendRequest {
-  session_id?: number;
   message: string;
+  session_id?: number;
 }
 
 export interface ChatSendResponse {
@@ -71,15 +61,7 @@ export interface ChatSendResponse {
   crisis_alert: boolean;
 }
 
-export interface ChatSession {
-  id: number;
-  user_id: number;
-  started_at: string;
-  ended_at: string | null;
-  total_messages: number;
-}
-
-// --- Dashboard ---
+// ---- Dashboard ----
 export interface DashboardStats {
   total_messages: number;
   avg_sentiment_7d: number;
@@ -106,28 +88,9 @@ export interface BehavioralPatterns {
   weekly_frequency: number[];
 }
 
-// --- Mood Log ---
-export interface MoodLog {
-  id: number;
-  user_id: number;
-  date: string;
-  avg_sentiment: number;
-  avg_risk_score: number;
-  dominant_emotion: string | null;
-  message_count: number;
-  late_night_activity: boolean;
-}
-
-// --- Recommendations ---
-export type RecommendationCategory =
-  | "activity"
-  | "journaling"
-  | "social"
-  | "professional_help"
-  | "breathing";
-
+// ---- Recommendations ----
 export interface Recommendation {
-  category: RecommendationCategory;
+  category: "activity" | "journaling" | "social" | "professional_help" | "breathing";
   title: string;
   description: string;
   priority: number;
@@ -135,4 +98,11 @@ export interface Recommendation {
 
 export interface RecommendationsResponse {
   recommendations: Recommendation[];
+}
+
+// ---- Analysis ----
+export interface AnalysisHistoryItem extends AnalysisResult {
+  id: number;
+  message_content: string;
+  created_at: string;
 }

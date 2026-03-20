@@ -18,7 +18,6 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
     if (!trimmed || isLoading) return;
     onSend(trimmed);
     setText("");
-    // Reset height
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -40,6 +39,19 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
     }
   }, [text]);
 
+  // Listen for suggestion clicks from ChatWindow
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (detail) {
+        setText(detail);
+        textareaRef.current?.focus();
+      }
+    };
+    window.addEventListener("chat:suggestion", handler);
+    return () => window.removeEventListener("chat:suggestion", handler);
+  }, []);
+
   return (
     <div className="border-t border-gray-200 bg-white p-4">
       <div className="mx-auto flex max-w-3xl items-end gap-2">
@@ -48,16 +60,18 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
+          placeholder="Type your message… (Enter to send, Shift+Enter for new line)"
           rows={1}
           disabled={isLoading}
           className="flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50"
+          aria-label="Message input"
         />
         <Button
           onClick={handleSubmit}
           disabled={!text.trim() || isLoading}
           size="icon"
           className="shrink-0 rounded-xl h-10 w-10"
+          aria-label="Send message"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -67,7 +81,8 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
         </Button>
       </div>
       <p className="mx-auto max-w-3xl mt-2 text-[10px] text-gray-400 text-center">
-        Aura is an AI assistant, not a therapist. Press Enter to send, Shift+Enter for new line.
+        Aura is an AI assistant, not a therapist. If you are in crisis, please call{" "}
+        <a href="tel:9152987821" className="underline hover:text-gray-600">iCall: 9152987821</a>.
       </p>
     </div>
   );

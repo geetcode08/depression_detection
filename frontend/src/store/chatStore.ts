@@ -1,85 +1,73 @@
+"use client";
+
 import { create } from "zustand";
-import type { ChatMessage, ChatSendResponse, RiskLabel } from "@/types";
 import { chatApi } from "@/lib/api";
+import type { ChatMessage } from "@/types";
 
 interface ChatState {
   messages: ChatMessage[];
-  sessionId: number | null;
   isLoading: boolean;
   error: string | null;
-  latestRiskLabel: RiskLabel | null;
+  sessionId: number | null;
+  latestRiskLabel: string | null;
   showCrisisAlert: boolean;
 
   sendMessage: (text: string) => Promise<void>;
   dismissCrisisAlert: () => void;
   clearChat: () => void;
+  setError: (error: string | null) => void;
 }
-
-let messageIdCounter = 0;
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
-  sessionId: null,
   isLoading: false,
   error: null,
+  sessionId: null,
   latestRiskLabel: null,
   showCrisisAlert: false,
 
   sendMessage: async (text: string) => {
-    const { sessionId } = get();
+    if (!text.trim()) return;
 
-    // Add user message immediately
+    // Optimistic user message
     const userMsg: ChatMessage = {
-      id: --messageIdCounter, // negative temp IDs for local messages
-      session_id: sessionId ?? 0,
-      user_id: 1,
+      id: `user-${Date.now()}`,
       role: "user",
-      content: text,
-      sentiment_score: null,
-      depression_risk_score: null,
-      risk_label: null,
-      emotion_label: null,
-      message_length: text.length,
+      content: text.trim(),
       created_at: new Date().toISOString(),
     };
 
-    set((s) => ({
-      messages: [...s.messages, userMsg],
+    set((state) => ({
+      messages: [...state.messages, userMsg],
       isLoading: true,
       error: null,
     }));
 
     try {
-      const response: ChatSendResponse = await chatApi.send({
-        session_id: sessionId ?? undefined,
-        message: text,
+      const response = await chatApi.send({
+        message: text.trim(),
+        session_id: get().sessionId ?? undefined,
       });
 
       const assistantMsg: ChatMessage = {
-        id: --messageIdCounter,
-        session_id: response.session_id,
-        user_id: 0,
+        id: `assistant-${Date.now()}`,
         role: "assistant",
         content: response.reply,
-        sentiment_score: response.analysis.sentiment_score,
-        depression_risk_score: response.analysis.risk_score,
-        risk_label: response.analysis.risk_label,
-        emotion_label: response.analysis.emotion_label ?? null,
-        message_length: response.reply.length,
         created_at: new Date().toISOString(),
         analysis: response.analysis,
         crisis_alert: response.crisis_alert,
       };
 
-      set((s) => ({
-        messages: [...s.messages, assistantMsg],
-        sessionId: response.session_id,
+      set((state) => ({
+        messages: [...state.messages, assistantMsg],
         isLoading: false,
+        sessionId: response.session_id,
         latestRiskLabel: response.analysis.risk_label,
-        showCrisisAlert: response.crisis_alert ? true : s.showCrisisAlert,
+        showCrisisAlert: response.crisis_alert,
       }));
-    } catch {
-      set({ isLoading: false, error: "Failed to send message. Please try again." });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Failed to send message";
+      set({ isLoading: false, error: errMsg });
     }
   },
 
@@ -89,9 +77,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({
       messages: [],
       sessionId: null,
-      isLoading: false,
       error: null,
       latestRiskLabel: null,
       showCrisisAlert: false,
     }),
+
+  setError: (error) => set({ error }),
 }));

@@ -90,7 +90,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Signing in...
                 </>
               ) : (
@@ -99,7 +99,17 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-4 text-center">
+            <Link
+              href="/chat"
+              className="text-xs text-gray-400 hover:text-gray-600 underline"
+              onClick={() => useUserStore.getState().continueAsGuest()}
+            >
+              Continue as guest (anonymous mode)
+            </Link>
+          </div>
+
+          <p className="mt-4 text-center text-sm text-gray-500">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="font-medium text-teal-600 hover:text-teal-700">
               Sign up

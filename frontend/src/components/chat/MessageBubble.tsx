@@ -6,7 +6,7 @@ import { formatTime } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import RiskBadge from "./RiskBadge";
-import { Bot, User } from "lucide-react";
+import { Bot, User, AlertTriangle } from "lucide-react";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -18,7 +18,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className={cn("flex gap-3 px-4", isUser ? "flex-row-reverse" : "flex-row")}>
       {/* Avatar */}
-      <Avatar className={cn("shrink-0", isUser ? "bg-teal-100" : "bg-purple-100")}>
+      <Avatar className={cn("shrink-0 h-9 w-9", isUser ? "bg-teal-100" : "bg-purple-100")}>
         <AvatarFallback className={isUser ? "bg-teal-100 text-teal-700" : "bg-purple-100 text-purple-700"}>
           {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </AvatarFallback>
@@ -26,6 +26,14 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 
       {/* Bubble */}
       <div className={cn("max-w-[75%] space-y-1", isUser ? "items-end" : "items-start")}>
+        {/* Crisis indicator on message */}
+        {!isUser && message.crisis_alert && (
+          <div className="flex items-center gap-1.5 text-[10px] text-red-600 font-medium mb-1">
+            <AlertTriangle className="h-3 w-3" />
+            High distress detected — helplines shown below
+          </div>
+        )}
+
         <div
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
@@ -51,11 +59,30 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                 score={message.analysis.risk_score}
               />
               {message.analysis.emotion_label && (
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px] capitalize">
                   {message.analysis.emotion_label}
                 </Badge>
               )}
-              {message.analysis.confidence && (
+              {message.analysis.sentiment_score !== undefined && (
+                <span
+                  className={cn(
+                    "text-[10px]",
+                    message.analysis.sentiment_score > 0.05
+                      ? "text-emerald-600"
+                      : message.analysis.sentiment_score < -0.05
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  )}
+                >
+                  sentiment:{" "}
+                  {message.analysis.sentiment_score > 0.05
+                    ? "positive"
+                    : message.analysis.sentiment_score < -0.05
+                    ? "negative"
+                    : "neutral"}
+                </span>
+              )}
+              {message.analysis.confidence !== undefined && (
                 <span className="text-[10px] text-gray-400">
                   conf: {(message.analysis.confidence * 100).toFixed(0)}%
                 </span>
@@ -64,9 +91,10 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           )}
         </div>
 
-        {/* Keywords */}
+        {/* Keywords (explainability) */}
         {!isUser && message.analysis?.top_keywords && message.analysis.top_keywords.length > 0 && (
           <div className="flex flex-wrap gap-1 px-1">
+            <span className="text-[10px] text-gray-400 mr-0.5">keywords:</span>
             {message.analysis.top_keywords.map((kw) => (
               <span
                 key={kw}
