@@ -93,4 +93,5 @@ async def send_message(
         reply=reply_text,
         session_id=session.id,
         analysis=analysis,
+        crisis_alert=analysis.crisis_alert,
     )

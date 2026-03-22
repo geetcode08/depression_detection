@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date as date_type
 from typing import Optional
 
 from sqlalchemy import Integer, Float, String, Boolean, Date, ForeignKey
@@ -12,7 +12,7 @@ class MoodLog(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    date: Mapped[date] = mapped_column(Date, nullable=False)
+    date: Mapped[date_type] = mapped_column(Date, nullable=False)
     avg_sentiment: Mapped[float] = mapped_column(Float, default=0.0)
     avg_risk_score: Mapped[float] = mapped_column(Float, default=0.0)
     dominant_emotion: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)

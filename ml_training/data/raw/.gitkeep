@@ -1,0 +1,2 @@
+# Place raw dataset CSVs here (e.g., Reddit depression dataset from Kaggle)
+# Expected columns: 'text' (string), 'label' (0 = no depression, 1 = depression)

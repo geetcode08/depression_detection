@@ -1,4 +1,6 @@
-from typing import List\n\nfrom fastapi import APIRouter, Depends, HTTPException, Query
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 

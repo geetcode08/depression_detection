@@ -14,3 +14,4 @@ class ChatResponse(BaseModel):
     reply: str
     session_id: int
     analysis: AnalysisResult
+    crisis_alert: bool = False

@@ -28,6 +28,8 @@ backend/venv/
 # ML training artifacts
 ml_training/data/processed/
 outputs/
+ml_training/data/raw/*.csv
+!ml_training/data/raw/.gitkeep
 
 # Node artifacts (frontend)
 frontend/node_modules/
