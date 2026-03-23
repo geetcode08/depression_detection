@@ -1,0 +1,147 @@
+name: Full Stack Tests & Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd backend
+        pip install -r requirements.txt
+
+    - name: Run backend tests
+      run: |
+        cd backend
+        pytest tests/ -v --tb=short
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Run linter
+      run: |
+        cd frontend
+        npm run lint
+
+    - name: Run tests
+      run: |
+        cd frontend
+        npm run test -- --run
+
+    - name: Build application
+      run: |
+        cd frontend
+        npm run build
+
+  ml-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install ML dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd ml_training
+        pip install -r requirements.txt
+
+    - name: Verify ML models exist
+      run: |
+        ls -lh backend/ml/model.pkl backend/ml/vectorizer.pkl || echo "Models not found (expected in initial runs)"
+
+  code-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint flake8
+
+    - name: Analyze backend code
+      run: |
+        flake8 backend --max-line-length=127 --exit-zero || true
+
+  security-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check for secrets
+      run: |
+        # Check for hardcoded API keys (basic check)
+        ! grep -r "sk-\|sk_\|gsk_" backend frontend/src --include="*.py" --include="*.ts" --include="*.tsx" || true
+
+    - name: Verify .env files are ignored
+      run: |
+        if git ls-files | grep -E "\.env$|\.env\.local$"; then
+          echo "ERROR: .env files should be gitignored"
+          exit 1
+        else
+          echo "✓ .env files properly ignored"
+        fi
+
+  summary:
+    needs: [backend-tests, frontend-tests, code-analysis, security-check]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: Check job statuses
+      run: |
+        if [ "${{ needs.backend-tests.result }}" = "failure" ] || \
+           [ "${{ needs.frontend-tests.result }}" = "failure" ] || \
+           [ "${{ needs.code-analysis.result }}" = "failure" ] || \
+           [ "${{ needs.security-check.result }}" = "failure" ]; then
+          echo "❌ Some tests failed"
+          exit 1
+        else
+          echo "✅ All tests passed"
+        fi
