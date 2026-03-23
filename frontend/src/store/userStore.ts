@@ -10,7 +10,9 @@ interface UserState {
 
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
+  startAnonymous: () => Promise<void>;
   logout: () => void;
+  deleteAccount: () => Promise<void>;
   fetchUser: () => Promise<void>;
   giveConsent: () => Promise<void>;
   setUser: (user: User) => void;
@@ -47,8 +49,25 @@ export const useUserStore = create<UserState>((set) => ({
     }
   },
 
+  startAnonymous: async () => {
+    set({ isLoading: true });
+    try {
+      await authApi.createAnonymous();
+      const user = await authApi.getMe();
+      set({ user, isAuthenticated: true, consentGiven: user.consent_given, isLoading: false });
+    } catch {
+      set({ isLoading: false });
+      throw new Error("Unable to start anonymous session.");
+    }
+  },
+
   logout: () => {
     authApi.logout();
+    set({ user: null, isAuthenticated: false, consentGiven: false });
+  },
+
+  deleteAccount: async () => {
+    await authApi.deleteAccount();
     set({ user: null, isAuthenticated: false, consentGiven: false });
   },
 
@@ -57,7 +76,7 @@ export const useUserStore = create<UserState>((set) => ({
       const user = await authApi.getMe();
       set({ user, isAuthenticated: true, consentGiven: user.consent_given });
     } catch {
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, consentGiven: false });
     }
   },
 

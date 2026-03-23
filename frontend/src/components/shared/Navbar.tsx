@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "@/store/userStore";
 import { Button } from "@/components/ui/button";
 import {
   MessageCircle,
   LayoutDashboard,
+  LineChart,
   LogOut,
+  UserX,
   Menu,
   X,
   Heart,
@@ -18,12 +20,26 @@ import { useState } from "react";
 const navLinks = [
   { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/analysis", label: "Analysis", icon: LineChart },
 ];
 
 export default function Navbar() {
+  const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user, logout } = useUserStore();
+  const { isAuthenticated, user, logout, startAnonymous, deleteAccount, isLoading } = useUserStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm("Delete your account and all associated data? This cannot be undone.");
+    if (!confirmed) return;
+    await deleteAccount();
+    router.push("/");
+  };
+
+  const handleAnonymous = async () => {
+    await startAnonymous();
+    router.push("/chat");
+  };
 
   return (
     <>
@@ -76,7 +92,19 @@ export default function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={logout}
+                  onClick={handleDeleteAccount}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <UserX className="h-4 w-4" />
+                  Delete
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    logout();
+                    router.push("/");
+                  }}
                   className="text-gray-500"
                 >
                   <LogOut className="h-4 w-4" />
@@ -85,6 +113,9 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <Button variant="outline" size="sm" onClick={handleAnonymous} disabled={isLoading}>
+                  Continue as Guest
+                </Button>
                 <Link href="/login">
                   <Button variant="ghost" size="sm">
                     Login
@@ -127,8 +158,16 @@ export default function Navbar() {
                   );
                 })}
                 <button
+                  onClick={handleDeleteAccount}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                >
+                  <UserX className="h-4 w-4" />
+                  Delete Account
+                </button>
+                <button
                   onClick={() => {
                     logout();
+                    router.push("/");
                     setMobileOpen(false);
                   }}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
@@ -139,6 +178,12 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <button
+                  onClick={handleAnonymous}
+                  className="block rounded-lg px-3 py-2 text-left text-sm text-teal-700 hover:bg-teal-50 w-full"
+                >
+                  Continue as Guest
+                </button>
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}

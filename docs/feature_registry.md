@@ -12,7 +12,7 @@
 | F-01 | User Registration | 🟢 | `routers/auth.py` | `src/app/(auth)/register/page.tsx` | JWT bootstrap via login after register |
 | F-02 | User Login | 🟢 | `routers/auth.py` | `src/app/(auth)/login/page.tsx` | OAuth2 form encoding integrated |
 | F-03 | Consent Gate | 🟢 | `routers/auth.py` | `src/components/shared/ConsentModal.tsx` | PATCH `/auth/consent` wired |
-| F-04 | Account Deletion | 🟢 | `routers/auth.py` | UI pending | Backend complete |
+| F-04 | Account Deletion | 🟢 | `routers/auth.py` | `src/components/shared/Navbar.tsx` | Account delete action in nav |
 | F-05 | Chat Send | 🟢 | `routers/chat.py` | `src/app/chat/page.tsx` | LLM + NLP pipeline live |
 | F-06 | Sentiment Analysis | 🟢 | `services/nlp_service.py` | `src/components/chat/MessageBubble.tsx` | Shown with message metadata |
 | F-07 | Depression Risk Scoring | 🟢 | `services/nlp_service.py` | `src/components/chat/RiskBadge.tsx` | Threshold-based UI rendering |
@@ -25,10 +25,10 @@
 | F-14 | Behavioral Analytics | 🟢 | `routers/dashboard.py` | `src/components/dashboard/RiskTrendChart.tsx` | Pattern chart wired |
 | F-15 | Mood Log Aggregation | 🟢 | `services/behavioral_service.py` | N/A | Daily upsert |
 | F-16 | Keyword Explainability | 🟢 | `services/nlp_service.py` | `src/components/chat/MessageBubble.tsx` | TF-IDF keywords visible |
-| F-17 | Anonymous Mode | 🟢 | `routers/auth.py` | UI pending | API endpoint exists |
+| F-17 | Anonymous Mode | 🟢 | `routers/auth.py` | `src/app/page.tsx` + `src/components/shared/Navbar.tsx` | Guest session flow wired |
 | F-18 | ML Model Training | 🟢 | `ml_training/` | N/A | Offline scripts |
 | F-19 | Analyze Arbitrary Text | 🟢 | `routers/analysis.py` | API client ready | POST /analyze |
-| F-20 | Analysis History | 🟢 | `routers/analysis.py` | UI pending | GET with pagination |
+| F-20 | Analysis History | 🟢 | `routers/analysis.py` | `src/app/analysis/page.tsx` | History + session summary UI |
 
 ## Update Rules
 - When implementing a feature, change status to 🟡

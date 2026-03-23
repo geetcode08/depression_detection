@@ -9,11 +9,11 @@ Output: data/processed/clean_data.csv with 'cleaned_text' and 'label' columns.
 import os
 import re
 import sys
+from typing import List
 
 import nltk
 import pandas as pd
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 
 # Download required NLTK data
@@ -23,6 +23,8 @@ nltk.download("stopwords", quiet=True)
 
 RAW_DIR = os.path.join(os.path.dirname(__file__), "data", "raw")
 PROCESSED_DIR = os.path.join(os.path.dirname(__file__), "data", "processed")
+MAX_SAMPLES = int(os.getenv("MAX_SAMPLES", "50000"))
+USE_STEMMING = os.getenv("USE_STEMMING", "0") == "1"
 
 
 def find_dataset() -> str:
@@ -54,10 +56,12 @@ def clean_text(text: str, stemmer: PorterStemmer, stop_words: set) -> str:
     # Remove extra whitespace
     text = re.sub(r"\s+", " ", text).strip()
 
-    # Tokenize
-    tokens = word_tokenize(text)
+    # Lightweight tokenization keeps preprocessing practical on very large datasets.
+    tokens: List[str] = text.split()
     # Remove stopwords and stem
-    tokens = [stemmer.stem(w) for w in tokens if w not in stop_words and len(w) > 2]
+    tokens = [w for w in tokens if w not in stop_words and len(w) > 2]
+    if USE_STEMMING:
+        tokens = [stemmer.stem(w) for w in tokens]
 
     return " ".join(tokens)
 
@@ -70,7 +74,8 @@ def main():
     # Find and load dataset
     dataset_path = find_dataset()
     print(f"Loading dataset: {dataset_path}")
-    df = pd.read_csv(dataset_path)
+    # Some public datasets contain malformed rows; skip unreadable lines.
+    df = pd.read_csv(dataset_path, on_bad_lines="skip", engine="python")
     print(f"Raw dataset shape: {df.shape}")
 
     # Validate columns
@@ -79,7 +84,17 @@ def main():
         col_map = {}
         for col in df.columns:
             lower = col.lower().strip()
-            if lower in ("text", "clean_text", "message", "content", "tweet", "post"):
+            if lower in (
+                "text",
+                "clean_text",
+                "message",
+                "content",
+                "tweet",
+                "post",
+                "body",
+                "selftext",
+                "title",
+            ):
                 col_map["text"] = col
             elif lower in ("label", "class", "target", "is_depression", "depression"):
                 col_map["label"] = col
@@ -93,6 +108,12 @@ def main():
     # Drop NaN and short texts
     df = df.dropna(subset=["text", "label"])
     df = df[df["text"].str.len() >= 10]
+
+    # Use a deterministic sample for very large corpora to keep training time practical.
+    if len(df) > MAX_SAMPLES:
+        print(f"Sampling {MAX_SAMPLES} rows from {len(df)} for MVP training speed...")
+        df = df.sample(n=MAX_SAMPLES, random_state=42)
+
     print(f"After removing NaN/short texts: {df.shape}")
 
     # Ensure label is binary

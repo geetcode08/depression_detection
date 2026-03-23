@@ -10,6 +10,8 @@ import type {
   RecommendationsResponse,
   User,
   AnalysisResult,
+  AnalysisHistoryItem,
+  SessionAnalysisResponse,
   LoginRequest,
   RegisterRequest,
 } from "@/types";
@@ -88,6 +90,18 @@ export const authApi = {
   logout: () => {
     localStorage.removeItem("access_token");
   },
+
+  deleteAccount: async (): Promise<{ message: string }> => {
+    const res = await api.delete<{ message: string }>("/auth/me");
+    localStorage.removeItem("access_token");
+    return res.data;
+  },
+
+  createAnonymous: async (): Promise<AuthResponse> => {
+    const res = await api.post<AuthResponse>("/auth/anonymous");
+    localStorage.setItem("access_token", res.data.access_token);
+    return res.data;
+  },
 };
 
 export const chatApi = {
@@ -122,6 +136,16 @@ export const dashboardApi = {
 export const analysisApi = {
   analyze: async (text: string): Promise<AnalysisResult> => {
     const res = await api.post<AnalysisResult>("/analyze", { text });
+    return res.data;
+  },
+
+  getHistory: async (limit = 50): Promise<AnalysisHistoryItem[]> => {
+    const res = await api.get<AnalysisHistoryItem[]>(`/analyze/history?limit=${limit}`);
+    return res.data;
+  },
+
+  getSessionAnalysis: async (sessionId: number): Promise<SessionAnalysisResponse> => {
+    const res = await api.get<SessionAnalysisResponse>(`/analyze/session/${sessionId}`);
     return res.data;
   },
 };

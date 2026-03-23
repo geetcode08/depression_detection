@@ -43,6 +43,25 @@ export interface AnalysisResult {
   crisis_alert?: boolean;
 }
 
+export interface AnalysisHistoryItem {
+  id: number;
+  content: string;
+  sentiment_score: number | null;
+  depression_risk_score: number | null;
+  risk_label: RiskLabel | null;
+  emotion_label: string | null;
+  created_at: string;
+}
+
+export interface SessionAnalysisResponse {
+  session_id: number;
+  total_messages: number;
+  avg_sentiment: number;
+  avg_risk_score: number;
+  dominant_risk_label: RiskLabel;
+  message_count: number;
+}
+
 export interface ChatMessage {
   id: number;
   session_id: number;
