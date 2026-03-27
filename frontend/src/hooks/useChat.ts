@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { useRef } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { chatApi, sendMessage as sendMessageApi } from "@/lib/api";
 import { useChatStore } from "@/store/chatStore";
 import { useUserStore } from "@/store/userStore";
 import { toast } from "@/lib/toast";
+
+let initSessionPromiseGlobal: Promise<number | null> | null = null;
 
 export function useChat() {
   const router = useRouter();
@@ -25,8 +26,6 @@ export function useChat() {
   } =
     useChatStore();
 
-  const initSessionPromiseRef = useRef<Promise<number | null> | null>(null);
-
   const send = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
@@ -40,8 +39,8 @@ export function useChat() {
 
       try {
         let activeSessionId = sessionId ?? useChatStore.getState().sessionId;
-        if (!activeSessionId && initSessionPromiseRef.current) {
-          activeSessionId = await initSessionPromiseRef.current;
+        if (!activeSessionId && initSessionPromiseGlobal) {
+          activeSessionId = await initSessionPromiseGlobal;
         }
 
         const response = await sendMessageApi({
@@ -112,8 +111,8 @@ export function useChat() {
       return existingSessionId;
     }
 
-    if (initSessionPromiseRef.current) {
-      return initSessionPromiseRef.current;
+    if (initSessionPromiseGlobal) {
+      return initSessionPromiseGlobal;
     }
 
     const initPromise = (async (): Promise<number | null> => {
@@ -141,12 +140,12 @@ export function useChat() {
         return null;
       } finally {
         setLoading(false);
-        initSessionPromiseRef.current = null;
+        initSessionPromiseGlobal = null;
       }
 
     })();
 
-    initSessionPromiseRef.current = initPromise;
+    initSessionPromiseGlobal = initPromise;
     return initPromise;
   }, [addMessage, router, setLoading, setSessionId]);
 

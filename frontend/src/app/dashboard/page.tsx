@@ -36,6 +36,48 @@ import {
   Wind,
 } from "lucide-react";
 
+type DashboardPayload = {
+  stats: DashboardStats;
+  moodTrend: MoodTrendData;
+  sentimentDist: SentimentDistribution;
+  behavior: BehavioralPatterns;
+  recommendations: Recommendation[];
+};
+
+let dashboardRequestInFlight: Promise<DashboardPayload> | null = null;
+
+async function loadDashboardPayload(): Promise<DashboardPayload> {
+  if (dashboardRequestInFlight) {
+    return dashboardRequestInFlight;
+  }
+
+  dashboardRequestInFlight = (async () => {
+    const [s, m, sd, b] = await Promise.all([
+      dashboardApi.getStats(),
+      dashboardApi.getMoodTrend(30),
+      dashboardApi.getSentimentDistribution(),
+      dashboardApi.getBehavior(),
+    ]);
+
+    const riskLabel = s.avg_risk_7d >= 0.65 ? "high" : s.avg_risk_7d >= 0.35 ? "medium" : "low";
+    const recs = await recommendApi.get(riskLabel);
+
+    return {
+      stats: s,
+      moodTrend: m,
+      sentimentDist: sd,
+      behavior: b,
+      recommendations: recs.recommendations,
+    };
+  })();
+
+  try {
+    return await dashboardRequestInFlight;
+  } finally {
+    dashboardRequestInFlight = null;
+  }
+}
+
 const categoryIcons: Record<string, typeof Activity> = {
   activity: Activity,
   journaling: BookOpen,
@@ -181,21 +223,12 @@ export default function DashboardPage() {
 
     async function fetchAll() {
       try {
-        const [s, m, sd, b] = await Promise.all([
-          dashboardApi.getStats(),
-          dashboardApi.getMoodTrend(30),
-          dashboardApi.getSentimentDistribution(),
-          dashboardApi.getBehavior(),
-        ]);
-        setStats(s);
-        setMoodTrend(m);
-        setSentimentDist(sd);
-        setBehavior(b);
-
-        const riskLabel =
-          s.avg_risk_7d >= 0.65 ? "high" : s.avg_risk_7d >= 0.35 ? "medium" : "low";
-        const recs = await recommendApi.get(riskLabel);
-        setRecommendations(recs.recommendations);
+        const payload = await loadDashboardPayload();
+        setStats(payload.stats);
+        setMoodTrend(payload.moodTrend);
+        setSentimentDist(payload.sentimentDist);
+        setBehavior(payload.behavior);
+        setRecommendations(payload.recommendations);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
       } finally {

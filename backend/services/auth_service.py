@@ -4,6 +4,7 @@ from typing import Optional
 
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import JWTError, ExpiredSignatureError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -15,20 +16,27 @@ from config import settings
 from database import get_db
 from models.user import User
 
-pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
+# Use pbkdf2_sha256 for all new hashes to avoid passlib+bcrypt backend issues in this environment.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 logger = logging.getLogger("auth_service")
 
 
 def hash_password(password: str) -> str:
-    try:
-        return pwd_context.hash(password, scheme="bcrypt")
-    except Exception as e:
-        logger.warning(f"bcrypt hash failed, falling back to pbkdf2_sha256: {e}")
-        return pwd_context.hash(password, scheme="pbkdf2_sha256")
+    return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    # Backward compatibility: verify legacy bcrypt hashes without invoking passlib's bcrypt backend.
+    if hashed_password.startswith(("$2a$", "$2b$", "$2y$")):
+        try:
+            result = bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+            logger.info(f"Password verification result: {result}")
+            return result
+        except ValueError:
+            logger.warning("Invalid legacy bcrypt hash format")
+            return False
+
     result = pwd_context.verify(plain_password, hashed_password)
     logger.info(f"Password verification result: {result}")
     return result
