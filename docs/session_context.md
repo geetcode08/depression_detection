@@ -13,12 +13,9 @@ This document provides continuity between AI development sessions. Update at the
     - Security audit: No hardcoded secrets found
     - Configuration management review (backend config.py, frontend api.ts)
     - Created comprehensive verification report: `docs/pre_deployment_verification.md`
-  - **Phase 7.2 - Containerization**: ✅ COMPLETED
-    - Created `backend/Dockerfile` (Python 3.11, FastAPI with uvicorn)
-    - Created `frontend/Dockerfile` (Node.js 20 multi-stage build)
-    - Created `docker-compose.yml` for local development (backend, frontend, database)
-    - Created `.docker.env` environment template
-    - Created comprehensive guide: `docs/docker_setup.md`
+  - **Phase 7.2 - Local Runtime Docs**: ✅ COMPLETED
+    - Added local-first run instructions for backend and frontend
+    - Documented local validation commands and troubleshooting
   - **Phase 7.3 - Frontend Testing**: ✅ COMPLETED
     - Set up Vitest with React Testing Library configuration
     - Created tests: `navbar.test.tsx`, `api.test.ts`, `store.test.ts`
@@ -44,8 +41,8 @@ This document provides continuity between AI development sessions. Update at the
   - **Git Workflow**: Committed 9ad3ae3 with Phase 7 documentation, pushed to origin/main
 
 ## Current State
-- **Backend**: Implemented, tested (29 passed), containerized, CI/CD ready
-- **Frontend**: Implemented, tested (Vitest configured), containerized, CI/CD ready
+- **Backend**: Implemented, tested (29 passed), local-run ready, CI/CD ready
+- **Frontend**: Implemented, tested (Vitest configured), local-run ready, CI/CD ready
 - **ML Models**: Artifacts generated and integrated (91% accuracy, in `backend/ml/`)
 - **Database**: Schema defined; SQLite for dev, PostgreSQL recommended for prod
 - **Deployment**: All Phase 7 documentation complete; ready for execution
@@ -60,7 +57,7 @@ This document provides continuity between AI development sessions. Update at the
 6. **Monitoring**: Set up Codecov dashboard and Uptimerobot for uptime monitoring
 7. **Environment Setup**: Create `.env.production` files for production secrets
 8. **Frontend Testing**: Run `npm install` and execute Vitest suite (pending npm setup)
-9. **Docker Build**: Test Docker build locally once Docker is available
+9. **Local Runtime Check**: Keep backend and frontend startup commands validated on macOS
 
 ## Key Decisions Made
 - Using async SQLAlchemy with aiosqlite for async SQLite support (dev), PostgreSQL recommended for prod
@@ -70,7 +67,6 @@ This document provides continuity between AI development sessions. Update at the
 - Rule-based recommendations with curated pool
 - Frontend and backend contracts prioritize real API integration over mock data
 - ML training uses deterministic sampling (50K samples) for speed; can retrain with higher MAX_SAMPLES
-- Docker Compose for local development with hot reload support
 - Vitest + React Testing Library for frontend unit tests
 - GitHub Actions for automated testing on push/PR (backend: pytest, frontend: eslint+vitest)
 - Render.com for backend deployment (free tier available, spins down after 15min inactivity)

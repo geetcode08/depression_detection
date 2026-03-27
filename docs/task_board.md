@@ -36,10 +36,9 @@
 - [ ] Final git integration to `main` branch and push
 
 ### Backlog
-- [ ] Docker Compose for local dev
-- [ ] Dockerfile for backend
 - [ ] Frontend tests (Vitest)
-- [ ] Deployment to Vercel + Render
+- [ ] Local runbook hardening (macOS setup + troubleshooting)
+- [ ] Optional cloud deployment docs refresh (Render/Vercel)
 - [ ] PostgreSQL migration for production
 
 ## Update Rules

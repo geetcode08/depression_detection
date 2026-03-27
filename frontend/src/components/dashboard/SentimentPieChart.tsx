@@ -25,13 +25,13 @@ export default function SentimentPieChart({ data }: SentimentPieChartProps) {
   ];
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="text-base">Sentiment Distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[300px] w-full min-w-0 min-h-[240px]">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
             <PieChart>
               <Pie
                 data={chartData}

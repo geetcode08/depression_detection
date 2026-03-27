@@ -25,7 +25,20 @@ async def test_register_duplicate_email(client: AsyncClient):
         "/api/v1/auth/register",
         json={"username": "user2", "email": "dup@example.com", "password": "password123"},
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_register_duplicate_username(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={"username": "sameuser", "email": "a@test.com", "password": "password123"},
+    )
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={"username": "sameuser", "email": "b@test.com", "password": "password123"},
+    )
+    assert response.status_code == 409
 
 
 @pytest.mark.asyncio
@@ -55,6 +68,27 @@ async def test_login_wrong_password(client: AsyncClient):
         data={"username": "wrong@example.com", "password": "wrongpassword"},
     )
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_login_nonexistent_user(client: AsyncClient):
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "ghost@test.com", "password": "anypass123"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_protected_route_without_token(client: AsyncClient):
+    response = await client.get("/api/v1/auth/me")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_protected_route_with_invalid_token(client: AsyncClient):
+    response = await client.get("/api/v1/auth/me", headers={"Authorization": "Bearer garbage"})
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -94,6 +128,29 @@ async def test_delete_account(client: AsyncClient, auth_headers: dict):
     # Should be unauthorized now
     resp = await client.get("/api/v1/auth/me", headers=auth_headers)
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_delete_account_cascades(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={"username": "deletetest", "email": "del@test.com", "password": "password123"},
+    )
+    login = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "del@test.com", "password": "password123"},
+    )
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    await client.patch("/api/v1/auth/consent", headers=headers)
+    await client.post("/api/v1/chat/send", json={"message": "hello"}, headers=headers)
+
+    response = await client.delete("/api/v1/auth/me", headers=headers)
+    assert response.status_code == 200
+
+    me_response = await client.get("/api/v1/auth/me", headers=headers)
+    assert me_response.status_code == 401
 
 
 @pytest.mark.asyncio

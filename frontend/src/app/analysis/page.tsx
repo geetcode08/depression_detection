@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { analysisApi } from "@/lib/api";
+import { useUserStore } from "@/store/userStore";
 import type { AnalysisHistoryItem, AnalysisResult, SessionAnalysisResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +18,8 @@ const riskTone: Record<string, string> = {
 };
 
 export default function AnalysisPage() {
+  const router = useRouter();
+  const { isAuthenticated, consentGiven, hasHydratedSession } = useUserStore();
   const [text, setText] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
@@ -34,8 +38,30 @@ export default function AnalysisPage() {
   };
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    if (!hasHydratedSession) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      router.replace("/login?next=%2Fanalysis");
+      return;
+    }
+
+    if (!consentGiven) {
+      router.replace("/consent?next=%2Fanalysis");
+      return;
+    }
+
+    void loadHistory();
+  }, [consentGiven, hasHydratedSession, isAuthenticated, router]);
+
+  if (!hasHydratedSession) {
+    return <div className="mx-auto max-w-5xl px-4 py-8 text-sm text-gray-500">Loading analysis workspace...</div>;
+  }
+
+  if (!isAuthenticated || !consentGiven) {
+    return null;
+  }
 
   const handleAnalyze = async () => {
     setError("");
@@ -63,9 +89,15 @@ export default function AnalysisPage() {
       return;
     }
 
+    const parsedSessionId = Number(sessionId);
+    if (!Number.isInteger(parsedSessionId) || parsedSessionId <= 0) {
+      setError("Session ID must be a positive integer.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await analysisApi.getSessionAnalysis(Number(sessionId));
+      const res = await analysisApi.getSessionAnalysis(parsedSessionId);
       setSessionSummary(res);
     } catch (err) {
       setSessionSummary(null);
@@ -109,11 +141,11 @@ export default function AnalysisPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <Badge className={riskTone[result.risk_label] ?? ""}>{result.risk_label}</Badge>
-              <span>Risk: {(result.risk_score * 100).toFixed(0)}%</span>
-              <span>Sentiment: {result.sentiment_score.toFixed(2)}</span>
+              <Badge className={riskTone[result.risk_label ?? ""] ?? ""}>{result.risk_label ?? "n/a"}</Badge>
+              <span>Risk: {result.risk_score != null ? `${(result.risk_score * 100).toFixed(0)}%` : "n/a"}</span>
+              <span>Sentiment: {result.sentiment_score != null ? result.sentiment_score.toFixed(2) : "n/a"}</span>
             </div>
-            <p>Confidence: {(result.confidence * 100).toFixed(0)}%</p>
+            <p>Confidence: {result.confidence != null ? `${(result.confidence * 100).toFixed(0)}%` : "n/a"}</p>
             <p>Keywords: {result.top_keywords.join(", ") || "None"}</p>
           </CardContent>
         </Card>

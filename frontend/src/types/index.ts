@@ -1,3 +1,5 @@
+// Fixes: normalized chat response contract to backend SRS shape while preserving compatibility aliases.
+
 // ============================================================
 // Shared TypeScript Interfaces — Depression AI System Frontend
 // ============================================================
@@ -32,15 +34,34 @@ export interface AuthResponse {
 // --- Chat ---
 export type RiskLabel = "low" | "medium" | "high";
 export type MessageRole = "user" | "assistant";
+export type AnalysisTier =
+  | "gathering"
+  | "sentiment_only"
+  | "emotion_detected"
+  | "preliminary_screening"
+  | "full_assessment";
+
+export type DashboardTier =
+  | "no_data"
+  | "sentiment_active"
+  | "emotions_active"
+  | "screening_active"
+  | "full_active"
+  | "longitudinal"
+  | "behavioral";
 
 export interface AnalysisResult {
-  sentiment_score: number; // -1.0 to 1.0
-  risk_score: number; // 0.0 to 1.0
-  risk_label: RiskLabel;
+  sentiment_score: number | null;
+  risk_score: number | null;
+  risk_label: RiskLabel | null;
   top_keywords: string[];
-  confidence: number;
-  emotion_label?: string;
-  crisis_alert?: boolean;
+  confidence: number | null;
+  emotion_label?: string | null;
+  analysis_tier: AnalysisTier;
+  words_until_next_tier?: number | null;
+  longitudinal_patterns_available: boolean;
+  behavioral_profile_available: boolean;
+  crisis_alert: boolean;
 }
 
 export interface AnalysisHistoryItem {
@@ -77,6 +98,7 @@ export interface ChatMessage {
   // Frontend-only fields
   analysis?: AnalysisResult;
   crisis_alert?: boolean;
+  isOpener?: boolean;
 }
 
 export interface ChatSendRequest {
@@ -84,12 +106,16 @@ export interface ChatSendRequest {
   message: string;
 }
 
-export interface ChatSendResponse {
+export interface ChatResponse {
   reply: string;
   session_id: number;
+  is_opener: boolean;
   analysis: AnalysisResult;
-  crisis_alert: boolean;
+  tier_just_unlocked?: string | null;
+  tier_unlock_message?: string | null;
 }
+
+export type ChatSendResponse = ChatResponse;
 
 export interface ChatSession {
   id: number;
@@ -105,6 +131,8 @@ export interface DashboardStats {
   avg_sentiment_7d: number;
   avg_risk_7d: number;
   current_streak_days: number;
+  cumulative_words: number;
+  dashboard_tier: DashboardTier;
 }
 
 export interface MoodTrendData {

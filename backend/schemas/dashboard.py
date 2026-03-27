@@ -8,6 +8,8 @@ class StatsResponse(BaseModel):
     avg_sentiment_7d: float
     avg_risk_7d: float
     current_streak_days: int
+    cumulative_words: int
+    dashboard_tier: str
 
 
 class MoodTrendResponse(BaseModel):

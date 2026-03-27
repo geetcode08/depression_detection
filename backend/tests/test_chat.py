@@ -1,70 +1,121 @@
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_chat_send(client: AsyncClient, auth_headers: dict):
-    with patch("routers.chat.get_llm_reply", new_callable=AsyncMock) as mock_llm:
-        mock_llm.return_value = "I hear you. It's okay to feel that way."
-
-        resp = await client.post(
-            "/api/v1/chat/send",
-            json={"message": "I feel a bit down today"},
-            headers=auth_headers,
-        )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "reply" in data
-        assert "session_id" in data
-        assert "analysis" in data
-        assert "sentiment_score" in data["analysis"]
-        assert "risk_score" in data["analysis"]
-        assert "risk_label" in data["analysis"]
-        assert data["analysis"]["risk_label"] in ("low", "medium", "high")
-
-
-@pytest.mark.asyncio
-async def test_chat_send_creates_session(client: AsyncClient, auth_headers: dict):
-    with patch("routers.chat.get_llm_reply", new_callable=AsyncMock) as mock_llm:
-        mock_llm.return_value = "Thank you for sharing."
-
-        resp = await client.post(
-            "/api/v1/chat/send",
-            json={"message": "Hello"},
-            headers=auth_headers,
-        )
-        assert resp.status_code == 200
-        session_id = resp.json()["session_id"]
-        assert session_id > 0
-
-        # Second message in same session
-        resp2 = await client.post(
-            "/api/v1/chat/send",
-            json={"session_id": session_id, "message": "How are you?"},
-            headers=auth_headers,
-        )
-        assert resp2.status_code == 200
-        assert resp2.json()["session_id"] == session_id
-
-
-@pytest.mark.asyncio
-async def test_chat_requires_consent(client: AsyncClient):
-    # Register without giving consent
-    await client.post(
-        "/api/v1/auth/register",
-        json={"username": "noconsent", "email": "noconsent@example.com", "password": "password123"},
-    )
-    login_resp = await client.post(
-        "/api/v1/auth/login",
-        data={"username": "noconsent@example.com", "password": "password123"},
-    )
-    token = login_resp.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    resp = await client.post(
+async def test_chat_without_consent_returns_403(client: AsyncClient, auth_headers_no_consent: dict):
+    response = await client.post(
         "/api/v1/chat/send",
-        json={"message": "Hello"},
-        headers=headers,
+        json={"message": "hello"},
+        headers=auth_headers_no_consent,
     )
-    assert resp.status_code == 403
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_chat_empty_message_returns_422_for_existing_session(client: AsyncClient, auth_headers: dict):
+    with patch("services.llm_service.get_session_opener", new_callable=AsyncMock) as opener_mock:
+        opener_mock.return_value = "Hey, I am Aura."
+        created = await client.post(
+            "/api/v1/chat/new-session",
+            headers=auth_headers,
+        )
+
+    session_id = created.json()["session_id"]
+    response = await client.post(
+        "/api/v1/chat/send",
+        json={"session_id": session_id, "message": ""},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_new_session_returns_opener(client: AsyncClient, auth_headers: dict):
+    with patch("services.llm_service.get_session_opener", new_callable=AsyncMock) as opener_mock:
+        opener_mock.return_value = "Hey, I am Aura. What is on your mind today?"
+        response = await client.post("/api/v1/chat/new-session", headers=auth_headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_opener"] is True
+    assert data["reply"]
+    assert data["analysis"]["analysis_tier"] == "gathering"
+
+
+@pytest.mark.asyncio
+async def test_short_message_stays_in_gathering_tier(client: AsyncClient, auth_headers: dict):
+    with patch("services.llm_service.get_session_opener", new_callable=AsyncMock) as opener_mock, patch(
+        "routers.chat.get_llm_reply", new_callable=AsyncMock
+    ) as llm_mock:
+        opener_mock.return_value = "Hey, I am Aura."
+        llm_mock.return_value = "I hear you."
+        response = await client.post(
+            "/api/v1/chat/send",
+            json={"message": "hello there"},
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert opener_mock.await_count == 0
+    assert data["analysis"]["analysis_tier"] == "gathering"
+    assert data["analysis"]["risk_score"] is None
+
+
+@pytest.mark.asyncio
+async def test_chat_send_creates_and_reuses_session(client: AsyncClient, auth_headers: dict):
+    with patch("services.llm_service.get_session_opener", new_callable=AsyncMock) as opener_mock, patch(
+        "routers.chat.get_llm_reply", new_callable=AsyncMock
+    ) as llm_mock:
+        opener_mock.return_value = "Hey, I am Aura."
+        llm_mock.return_value = "Thanks for sharing."
+
+        first = await client.post(
+            "/api/v1/chat/send",
+            json={"message": "I am feeling okay"},
+            headers=auth_headers,
+        )
+        assert first.status_code == 200
+        session_id = first.json()["session_id"]
+
+        second = await client.post(
+            "/api/v1/chat/send",
+            json={"session_id": session_id, "message": "Today was stressful"},
+            headers=auth_headers,
+        )
+
+    assert second.status_code == 200
+    assert second.json()["session_id"] == session_id
+    assert opener_mock.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_high_risk_message_returns_crisis_alert_only_full_tier(
+    client: AsyncClient,
+    auth_headers: dict,
+    mock_high_risk_nlp,
+):
+    with patch("services.llm_service.get_session_opener", new_callable=AsyncMock) as opener_mock, patch(
+        "routers.chat.get_llm_reply", new_callable=AsyncMock
+    ) as llm_mock, patch(
+        "routers.chat.nlp_service.count_user_words_in_session", new_callable=AsyncMock
+    ) as session_words_mock, patch(
+        "routers.chat.nlp_service.count_user_words_cumulative", new_callable=AsyncMock
+    ) as cumulative_words_mock:
+        opener_mock.return_value = "Hey, I am Aura."
+        llm_mock.return_value = "I am here with you."
+        session_words_mock.return_value = 600
+        cumulative_words_mock.return_value = 1000
+
+        response = await client.post(
+            "/api/v1/chat/send",
+            json={"message": "I want to hurt myself"},
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["analysis"]["risk_label"] == "high"
+    assert data["analysis"]["crisis_alert"] is True

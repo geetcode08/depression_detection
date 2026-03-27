@@ -9,11 +9,15 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { fetchUser } = useUserStore();
+  const { fetchUser, hydrateSession } = useUserStore();
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    hydrateSession();
+    const hasToken = typeof window !== "undefined" && Boolean(localStorage.getItem("access_token"));
+    if (hasToken) {
+      fetchUser();
+    }
+  }, [fetchUser, hydrateSession]);
 
   return (
     <>

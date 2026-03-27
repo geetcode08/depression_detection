@@ -5,12 +5,16 @@ from pydantic import BaseModel
 
 
 class AnalysisResult(BaseModel):
-    sentiment_score: float
-    risk_score: float
-    risk_label: str
-    top_keywords: List[str]
-    confidence: float
+    sentiment_score: Optional[float] = None
+    risk_score: Optional[float] = None
+    risk_label: Optional[str] = None
+    top_keywords: List[str] = []
+    confidence: Optional[float] = None
     emotion_label: Optional[str] = None
+    analysis_tier: str = "gathering"
+    words_until_next_tier: Optional[int] = None
+    longitudinal_patterns_available: bool = False
+    behavioral_profile_available: bool = False
     crisis_alert: bool = False
 
 

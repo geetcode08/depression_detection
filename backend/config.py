@@ -12,14 +12,15 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     HF_API_TOKEN: str = ""
 
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "*"
     ENVIRONMENT: str = "development"
 
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    # Load project-root .env, then let backend/.env override local runtime values.
+    model_config = {"env_file": ("../.env", ".env"), "env_file_encoding": "utf-8"}
 
 
 settings = Settings()

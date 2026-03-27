@@ -6,6 +6,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.message import Message
 from models.mood_log import MoodLog
+from models.user import User
+
+
+def _get_dashboard_tier(cumulative_words: int) -> str:
+    if cumulative_words < 50:
+        return "no_data"
+    if cumulative_words < 150:
+        return "sentiment_active"
+    if cumulative_words < 300:
+        return "emotions_active"
+    if cumulative_words < 600:
+        return "screening_active"
+    if cumulative_words < 1500:
+        return "full_active"
+    if cumulative_words < 4000:
+        return "longitudinal"
+    return "behavioral"
 
 
 async def aggregate_daily_mood(db: AsyncSession, user_id: int) -> None:
@@ -103,11 +120,17 @@ async def get_dashboard_stats(db: AsyncSession, user_id: int) -> dict:
     # Current streak (consecutive days with messages)
     streak = await _calculate_streak(db, user_id)
 
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+    cumulative_words = int(user.cumulative_words or 0) if user else 0
+
     return {
         "total_messages": total_messages,
         "avg_sentiment_7d": avg_sentiment_7d,
         "avg_risk_7d": avg_risk_7d,
         "current_streak_days": streak,
+        "cumulative_words": cumulative_words,
+        "dashboard_tier": _get_dashboard_tier(cumulative_words),
     }
 
 

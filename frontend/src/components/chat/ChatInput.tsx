@@ -6,16 +6,17 @@ import { Send, Loader2 } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
-  isLoading: boolean;
+  disabled: boolean;
+  isSending?: boolean;
 }
 
-export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export default function ChatInput({ onSend, disabled, isSending = false }: ChatInputProps) {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = () => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || disabled) return;
     onSend(trimmed);
     setText("");
     // Reset height
@@ -27,6 +28,9 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (!text.trim()) {
+        return;
+      }
       handleSubmit();
     }
   };
@@ -50,16 +54,17 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
           rows={1}
-          disabled={isLoading}
+          disabled={disabled}
           className="flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50"
         />
         <Button
           onClick={handleSubmit}
-          disabled={!text.trim() || isLoading}
+          disabled={!text.trim() || disabled}
           size="icon"
           className="shrink-0 rounded-xl h-10 w-10"
+          aria-label="Send"
         >
-          {isLoading ? (
+          {isSending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Send className="h-4 w-4" />

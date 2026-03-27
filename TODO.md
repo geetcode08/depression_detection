@@ -1,12 +1,12 @@
 # Project TODO Tracker
 
 **Last Updated**: 2026-03-23  
-**Status**: Most implementation complete; deployment phase documentation ready
+**Status**: Most implementation complete; local runtime workflow ready
 
 **Session Summary (2026-03-23)**:
 - ✅ Reconstructed and completed TODO list for deployment phase (Phase 7)
 - ✅ Pre-deployment verification: Environment variables, secrets management, configuration
-- ✅ Containerization: Created Dockerfiles (backend/frontend), docker-compose.yml, and setup guide
+- ✅ Local runtime docs: backend/frontend local startup and validation guide
 - ✅ Frontend Testing: Set up Vitest configuration, test files, and comprehensive testing guide
 - ✅ CI/CD Pipeline: Created GitHub Actions workflows for backend, frontend, and full-stack testing
 - ✅ Deployment Target Documentation: Comprehensive Render and Vercel guides with troubleshooting
@@ -103,13 +103,11 @@
 - [x] Test with `.env.example` to ensure no hardcoded secrets in codebase
 - [x] Created comprehensive pre-deployment verification report: `docs/pre_deployment_verification.md`
 
-### Containerization ✅ COMPLETED (Ready for Docker Build)
-- [x] Create `Dockerfile` for backend (FastAPI + Python 3.11)
-- [x] Create `Dockerfile` for frontend (Node.js + Next.js)
-- [x] Create `docker-compose.yml` for local dev (backend, frontend, database)
-- [x] Create `.docker.env` environment template
-- [x] Create comprehensive `docs/docker_setup.md` guide
-- [ ] Test Docker build locally (requires Docker installation)
+### Local Runtime Setup ✅ COMPLETED
+- [x] Define backend local startup workflow (`uvicorn` + `.venv`)
+- [x] Define frontend local startup workflow (`npm run dev`)
+- [x] Document local env file requirements (`.env`, `frontend/.env.local`)
+- [x] Create comprehensive local-run guide in `docs/deployment.md`
 
 ### Frontend Testing ✅ COMPLETED
 - [x] Add Vitest configuration (`vitest.config.ts`)
@@ -165,7 +163,7 @@
 ## Priority Order for Continuation
 
 1. **IMMEDIATE** (Completed): Pre-deployment checks + env validation ✅
-2. **IMMEDIATE** (Completed): Containerization (Docker) setup ✅  
+2. **IMMEDIATE** (Completed): Local runtime setup documentation ✅  
 3. **IMMEDIATE** (Completed): Frontend tests (Vitest) configuration ✅
 4. **IMMEDIATE** (Completed): CI/CD pipeline (GitHub Actions) setup ✅
 5. **IMMEDIATE** (Completed): Deployment documentation (Render/Vercel) ✅
@@ -203,7 +201,7 @@
 
 - All Phase 1-6 work is complete and validated
 - Current codebase is production-ready for MVP
-- Main blockers for deployment: containerization, CI/CD, and environment setup
+- Main blockers for deployment: CI/CD activation and environment setup
 - ML model is 91% accurate on 50K sampled dataset; can retrain with larger MAX_SAMPLES if needed
-- Recommend starting deployment phase with `.env` validation and Docker setup
+- Recommend starting runtime checks with `.env` validation and local service startup
 - UNDERSTAND.md intentionally left untracked per user request

@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import RiskBadge from "./RiskBadge";
 import { Bot, User } from "lucide-react";
 
 interface MessageBubbleProps {
@@ -14,6 +13,25 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
+  const isOpener = Boolean(message.isOpener);
+
+  const canShowEmotion =
+    !isUser &&
+    !isOpener &&
+    Boolean(message.analysis?.emotion_label) &&
+    ["emotion_detected", "preliminary_screening", "full_assessment"].includes(
+      message.analysis?.analysis_tier ?? ""
+    );
+
+  const emotionStyleMap: Record<string, string> = {
+    frustrated: "bg-amber-100 text-amber-800",
+    overwhelmed: "bg-orange-100 text-orange-800",
+    anxious: "bg-yellow-100 text-yellow-800",
+    positive: "bg-green-100 text-green-800",
+    calm: "bg-slate-100 text-slate-700",
+    low: "bg-indigo-100 text-indigo-800",
+    unsettled: "bg-violet-100 text-violet-800",
+  };
 
   return (
     <div className={cn("flex gap-3 px-4", isUser ? "flex-row-reverse" : "flex-row")}>
@@ -26,12 +44,19 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 
       {/* Bubble */}
       <div className={cn("max-w-[75%] space-y-1", isUser ? "items-end" : "items-start")}>
+        {!isUser && isOpener && (
+          <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-teal-700">
+            Aura is here
+          </div>
+        )}
+
         <div
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
             isUser
               ? "bg-teal-600 text-white rounded-br-md"
-              : "bg-gray-100 text-gray-800 rounded-bl-md"
+              : "bg-gray-100 text-gray-800 rounded-bl-md",
+            !isUser && isOpener && "animate-in fade-in duration-500 bg-teal-50 border border-teal-100"
           )}
         >
           {message.content}
@@ -43,40 +68,18 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             {formatTime(message.created_at)}
           </span>
 
-          {/* Show analysis info on assistant messages */}
-          {!isUser && message.analysis && (
-            <>
-              <RiskBadge
-                label={message.analysis.risk_label}
-                score={message.analysis.risk_score}
-              />
-              {message.analysis.emotion_label && (
-                <Badge variant="secondary" className="text-[10px]">
-                  {message.analysis.emotion_label}
-                </Badge>
+          {canShowEmotion && (
+            <Badge
+              className={cn(
+                "text-[10px] border-0",
+                emotionStyleMap[(message.analysis?.emotion_label ?? "").toLowerCase()] ??
+                  "bg-slate-100 text-slate-700"
               )}
-              {message.analysis.confidence && (
-                <span className="text-[10px] text-gray-400">
-                  conf: {(message.analysis.confidence * 100).toFixed(0)}%
-                </span>
-              )}
-            </>
+            >
+              feeling {message.analysis?.emotion_label}
+            </Badge>
           )}
         </div>
-
-        {/* Keywords */}
-        {!isUser && message.analysis?.top_keywords && message.analysis.top_keywords.length > 0 && (
-          <div className="flex flex-wrap gap-1 px-1">
-            {message.analysis.top_keywords.map((kw) => (
-              <span
-                key={kw}
-                className="rounded bg-gray-50 border border-gray-200 px-1.5 py-0.5 text-[10px] text-gray-500"
-              >
-                {kw}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

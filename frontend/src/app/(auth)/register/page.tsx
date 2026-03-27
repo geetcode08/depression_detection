@@ -11,12 +11,23 @@ import { Heart, Mail, Lock, User, Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, isLoading } = useUserStore();
+  const { register, login, isLoading } = useUserStore();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+
+  const getNextPath = (): string => {
+    if (typeof window === "undefined") {
+      return "/chat";
+    }
+    const raw = new URLSearchParams(window.location.search).get("next") ?? "/chat";
+    if (raw.startsWith("/") && !raw.startsWith("//")) {
+      return raw;
+    }
+    return "/chat";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +50,15 @@ export default function RegisterPage() {
 
     try {
       await register(username, email, password);
-      router.push("/chat");
+      await login(email, password);
+
+      const nextPath = getNextPath();
+      const { consentGiven } = useUserStore.getState();
+      if (consentGiven) {
+        router.replace(nextPath);
+      } else {
+        router.replace(`/consent?next=${encodeURIComponent(nextPath)}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed.");
     }

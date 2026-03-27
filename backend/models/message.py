@@ -22,5 +22,5 @@ class Message(Base):
     message_length: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    session = relationship("ChatSession", back_populates="messages")
+    session = relationship("ChatSession", back_populates="messages", foreign_keys=[session_id])
     user = relationship("User", back_populates="messages")

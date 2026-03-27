@@ -2,19 +2,24 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Phone, X, ExternalLink } from "lucide-react";
+import { Phone, X } from "lucide-react";
 
 interface CrisisAlertProps {
-  onDismiss: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export default function CrisisAlert({ onDismiss }: CrisisAlertProps) {
+export default function CrisisAlert({ isOpen, onClose }: CrisisAlertProps) {
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <Card className="max-w-md w-full border-red-200 bg-red-50">
         <CardHeader className="relative text-center pb-2">
           <button
-            onClick={onDismiss}
+            onClick={onClose}
             className="absolute right-4 top-4 text-red-400 hover:text-red-600"
             aria-label="Close"
           >
@@ -64,35 +69,10 @@ export default function CrisisAlert({ onDismiss }: CrisisAlertProps) {
                 1860-2662-345
               </span>
             </a>
-
-            <a
-              href="tel:08046110007"
-              className="flex items-center justify-between rounded-lg bg-white p-3 border border-red-200 hover:bg-red-50 transition-colors"
-            >
-              <div>
-                <p className="font-semibold text-red-800 text-sm">
-                  NIMHANS Helpline
-                </p>
-                <p className="text-xs text-red-600">Mon–Sat, 8am–8pm</p>
-              </div>
-              <span className="text-sm font-bold text-red-700">
-                080-46110007
-              </span>
-            </a>
-
-            <a
-              href="https://icallhelpline.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 rounded-lg bg-white p-3 border border-red-200 hover:bg-red-50 transition-colors text-sm text-red-700"
-            >
-              <ExternalLink className="h-4 w-4" />
-              iCall Online Chat
-            </a>
           </div>
 
           <Button
-            onClick={onDismiss}
+            onClick={onClose}
             variant="outline"
             className="w-full border-red-300 text-red-700 hover:bg-red-100"
           >

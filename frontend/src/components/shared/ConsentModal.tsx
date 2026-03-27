@@ -5,12 +5,17 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { ShieldCheck } from "lucide-react";
 
 interface ConsentModalProps {
+  isOpen: boolean;
   onAccept: () => void;
 }
 
-export default function ConsentModal({ onAccept }: ConsentModalProps) {
+export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <Card className="max-w-lg w-full animate-in fade-in zoom-in-95">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-teal-100">

@@ -1,16 +1,15 @@
+// Fixes: ChatWindow now reads messages/loading directly from chatStore instead of relying on parent-passed local arrays.
+
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { ChatMessage } from "@/types";
+import { useChatStore } from "@/store/chatStore";
 import MessageBubble from "./MessageBubble";
-import { Bot, Loader2 } from "lucide-react";
+import { Bot } from "lucide-react";
 
-interface ChatWindowProps {
-  messages: ChatMessage[];
-  isLoading: boolean;
-}
-
-export default function ChatWindow({ messages, isLoading }: ChatWindowProps) {
+export default function ChatWindow() {
+  const messages = useChatStore((s) => s.messages);
+  const isLoading = useChatStore((s) => s.isLoading);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
@@ -36,10 +35,10 @@ export default function ChatWindow({ messages, isLoading }: ChatWindowProps) {
           </p>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md">
             {[
-              "How are you feeling today?",
-              "I've been feeling anxious lately",
-              "I need someone to talk to",
-              "What coping strategies do you suggest?",
+              "I have been feeling anxious lately.",
+              "I am struggling to sleep and stay focused.",
+              "I feel low even when things seem okay.",
+              "I need help calming down right now.",
             ].map((suggestion) => (
               <button
                 key={suggestion}
@@ -68,9 +67,10 @@ export default function ChatWindow({ messages, isLoading }: ChatWindowProps) {
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
             <Bot className="h-4 w-4 text-purple-700" />
           </div>
-          <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3">
-            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-            <span className="text-sm text-gray-400">Aura is typing...</span>
+          <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3" aria-label="Typing indicator">
+            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.25s]" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
           </div>
         </div>
       )}

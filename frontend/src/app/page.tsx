@@ -44,7 +44,7 @@ const features = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const { isAuthenticated, consentGiven, giveConsent, startAnonymous, isLoading } = useUserStore();
+  const { isAuthenticated, consentGiven, giveConsent } = useUserStore();
   const [showConsent, setShowConsent] = useState(false);
 
   const handleGetStarted = () => {
@@ -72,12 +72,7 @@ export default function LandingPage() {
   };
 
   const handleContinueAsGuest = async () => {
-    try {
-      await startAnonymous();
-      router.push("/chat");
-    } catch {
-      // The auth store exposes proper errors on auth pages; keep CTA resilient.
-    }
+    router.push("/login");
   };
 
   return (
@@ -110,7 +105,6 @@ export default function LandingPage() {
               size="lg"
               className="text-base px-8"
               onClick={handleContinueAsGuest}
-              disabled={isLoading}
             >
               Continue as Guest
             </Button>
@@ -196,7 +190,12 @@ export default function LandingPage() {
       </footer>
 
       {/* Consent Modal */}
-      {showConsent && <ConsentModal onAccept={handleConsentAccept} />}
+      {showConsent && (
+        <ConsentModal
+          isOpen={showConsent}
+          onAccept={handleConsentAccept}
+        />
+      )}
     </div>
   );
 }

@@ -1,117 +1,76 @@
-/**
- * Test suite for Navbar component
- * Tests: Navigation links, auth state rendering, guest mode, delete account
- */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import Navbar from "@/components/shared/Navbar";
+import { useUserStore } from "@/store/userStore";
+import { useChatStore } from "@/store/chatStore";
+import { useRouter as useNextRouter, usePathname } from "next/navigation";
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import Navbar from '@/components/shared/Navbar';
-
-// Mock dependencies
-vi.mock('@/store/userStore', () => ({
+vi.mock("@/store/userStore", () => ({
   useUserStore: vi.fn(),
 }));
 
-vi.mock('next/router', () => ({
-  useRouter: vi.fn(),
+vi.mock("@/store/chatStore", () => ({
+  useChatStore: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
   usePathname: vi.fn(),
 }));
 
-const { useUserStore } = require('@/store/userStore');
-const { useRouter: useNextRouter } = require('next/navigation');
-
-describe('Navbar Component', () => {
-  const mockPush = vi.fn();
-  const mockLogout = vi.fn();
-  const mockDeleteAccount = vi.fn();
+describe("Navbar Component", () => {
+  const mockReplace = vi.fn();
+  const mockClearUser = vi.fn();
+  const mockClearChat = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPush.mockClear();
-    mockLogout.mockClear();
-    mockDeleteAccount.mockClear();
 
-    // Default mock: authenticated user
-    useUserStore.mockReturnValue({
-      user: { id: '1', email: 'test@example.com' },
-      isAuthenticated: true,
-      isGuest: false,
-      logout: mockLogout,
-      deleteAccount: mockDeleteAccount,
-    });
+    vi.mocked(useUserStore).mockReturnValue({
+      user: {
+        id: 1,
+        username: "testuser",
+        email: "test@example.com",
+        consent_given: true,
+        is_anonymous: false,
+        created_at: "2026-01-01T00:00:00Z",
+      },
+      clearUser: mockClearUser,
+    } as never);
 
-    useNextRouter.mockReturnValue({
-      push: mockPush,
-      pathname: '/',
-    });
+    vi.mocked(useChatStore).mockReturnValue({
+      clearChat: mockClearChat,
+    } as never);
+
+    vi.mocked(useNextRouter).mockReturnValue({
+      replace: mockReplace,
+      push: vi.fn(),
+    } as never);
+
+    vi.mocked(usePathname).mockReturnValue("/dashboard");
   });
 
-  it('renders navigation links for authenticated user', () => {
+  it("renders logged-in navigation links", () => {
     render(<Navbar />);
-
-    // Check for authentication-related elements
-    expect(screen.getByText(/test@example.com/)).toBeInTheDocument();
+    expect(screen.getByText(/testuser/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /chat/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /analysis/i })).toBeInTheDocument();
   });
 
-  it('contains Analysis link in navigation', () => {
+  it("renders logged-out auth buttons", () => {
+    vi.mocked(useUserStore).mockReturnValue({ user: null, clearUser: mockClearUser } as never);
     render(<Navbar />);
-
-    // Analysis link should be present
-    const analysisLink = screen.queryByText(/Analysis/i) || 
-                         screen.queryByRole('link', { name: /Analysis/i });
-    if (analysisLink) {
-      expect(analysisLink).toBeInTheDocument();
-    }
+    expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /register/i })).toBeInTheDocument();
   });
 
-  it('renders guest mode option when not authenticated', () => {
-    useUserStore.mockReturnValue({
-      user: null,
-      isAuthenticated: false,
-      isGuest: false,
-      logout: mockLogout,
-      deleteAccount: mockDeleteAccount,
-    });
-
+  it("logs out and redirects to login", async () => {
     render(<Navbar />);
-
-    // Guest-related elements should be visible
-    const screenText = screen.queryByText(/Guest/i);
-    expect(screenText || true).toBeTruthy();
-  });
-
-  it('shows account deletion option for authenticated users', async () => {
-    render(<Navbar />);
-
-    // Try to find delete account button
-    const deleteBtn = screen.queryByRole('button', { name: /delete/i });
-    if (deleteBtn) {
-      expect(deleteBtn).toBeInTheDocument();
-    }
-  });
-
-  it('calls logout when logout is triggered', async () => {
-    render(<Navbar />);
-
-    // Find and click logout button (if exists)
-    const logoutBtn = screen.queryByRole('button', { name: /logout|sign out/i });
-    if (logoutBtn) {
-      await userEvent.click(logoutBtn);
-      await waitFor(() => {
-        expect(mockLogout).toHaveBeenCalled();
-      });
-    }
-  });
-
-  it('renders responsive menu on mobile', () => {
-    render(<Navbar />);
-
-    // Component should render without errors
-    expect(screen.getByRole('navigation') || true).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: /logout/i }));
+    expect(mockClearUser).toHaveBeenCalledTimes(1);
+    expect(mockClearChat).toHaveBeenCalledTimes(1);
+    expect(mockReplace).toHaveBeenCalledWith("/login");
   });
 });

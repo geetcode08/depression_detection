@@ -14,10 +14,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MoodTrendData } from "@/types";
 
 interface MoodLineChartProps {
-  data: MoodTrendData;
+  data: MoodTrendData | null;
 }
 
 export default function MoodLineChart({ data }: MoodLineChartProps) {
+  if (!data) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Mood & Risk Trend (30 days)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500">Loading mood trend...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const chartData = data.dates.map((date, i) => ({
     date: date.slice(5), // MM-DD
     sentiment: data.sentiment_scores[i],
@@ -25,13 +38,13 @@ export default function MoodLineChart({ data }: MoodLineChartProps) {
   }));
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="text-base">Mood & Risk Trend (30 days)</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[300px] w-full min-w-0 min-h-[240px]">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
             <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis

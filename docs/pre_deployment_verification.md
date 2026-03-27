@@ -216,5 +216,8 @@ grep -r "BaseSettings\|process.env\|os.getenv" \
 
 ## Next Steps
 
-Proceed to **Phase 7.2: Containerization** (Docker setup) once deployment credentials are obtained.
+Proceed with local validation and runtime checks:
+- Run backend tests with `pytest`
+- Run frontend checks with `npm run lint`, `npm run build`, and `npm run test -- --run`
+- Keep environment values in local `.env` and `frontend/.env.local`
 

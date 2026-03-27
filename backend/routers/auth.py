@@ -18,16 +18,11 @@ from services.auth_service import (
     get_current_user,
 )
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Check existing username
-    result = await db.execute(select(User).where(User.username == user_data.username))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Username already taken")
-
     # Check existing email
     result = await db.execute(select(User).where(User.email == user_data.email))
     if result.scalar_one_or_none():
@@ -37,10 +32,12 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         username=user_data.username,
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
+        is_anonymous=user_data.is_anonymous,
     )
     db.add(user)
     await db.flush()
     await db.refresh(user)
+    await db.commit()
     return user
 
 
@@ -52,11 +49,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(data={"sub": str(user.id)})
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
     return TokenResponse(access_token=access_token)
 
 
@@ -72,7 +69,8 @@ async def give_consent(
 ):
     current_user.consent_given = True
     await db.flush()
-    return {"message": "Consent granted"}
+    await db.commit()
+    return {"message": "Consent recorded"}
 
 
 @router.delete("/me")
@@ -82,6 +80,7 @@ async def delete_account(
 ):
     await db.delete(current_user)
     await db.flush()
+    await db.commit()
     return {"message": "Account deleted"}
 
 
@@ -99,6 +98,7 @@ async def create_anonymous_user(db: AsyncSession = Depends(get_db)):
     db.add(user)
     await db.flush()
     await db.refresh(user)
+    await db.commit()
 
     access_token = create_access_token(data={"sub": str(user.id)})
     return TokenResponse(access_token=access_token)

@@ -16,6 +16,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const getNextPath = (): string => {
+    if (typeof window === "undefined") {
+      return "/chat";
+    }
+    const raw = new URLSearchParams(window.location.search).get("next") ?? "/chat";
+    if (raw.startsWith("/") && !raw.startsWith("//")) {
+      return raw;
+    }
+    return "/chat";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -27,7 +38,13 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/chat");
+      const nextPath = getNextPath();
+      const { consentGiven } = useUserStore.getState();
+      if (consentGiven) {
+        router.replace(nextPath);
+      } else {
+        router.replace(`/consent?next=${encodeURIComponent(nextPath)}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     }

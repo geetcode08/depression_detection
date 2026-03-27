@@ -22,6 +22,8 @@ async def test_dashboard_stats(client: AsyncClient, auth_headers: dict):
     assert "avg_sentiment_7d" in data
     assert "avg_risk_7d" in data
     assert "current_streak_days" in data
+    assert "cumulative_words" in data
+    assert "dashboard_tier" in data
 
 
 @pytest.mark.asyncio
