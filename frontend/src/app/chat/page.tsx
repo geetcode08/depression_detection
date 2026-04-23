@@ -9,6 +9,8 @@ import ChatInput from "@/components/chat/ChatInput";
 import CrisisAlert from "@/components/shared/CrisisAlert";
 import Disclaimer from "@/components/shared/Disclaimer";
 import { Button } from "@/components/ui/button";
+import { chatApi } from "@/lib/api";
+import { toast } from "@/lib/toast";
 
 export default function ChatPage() {
   const router = useRouter();
@@ -63,7 +65,17 @@ export default function ChatPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
+              onClick={async () => {
+                if (sessionId) {
+                  try {
+                    const summary = await chatApi.endSession(sessionId);
+                    if (summary.summary) {
+                      toast.success(`Session Summary: ${summary.summary}`, { duration: 8000 });
+                    }
+                  } catch {
+                    // Non-critical: proceed with reset even if summary endpoint fails.
+                  }
+                }
                 clearChat();
                 void initSession();
               }}

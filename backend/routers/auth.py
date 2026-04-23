@@ -26,7 +26,12 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     # Check existing email
     result = await db.execute(select(User).where(User.email == user_data.email))
     if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    # Check existing username
+    result = await db.execute(select(User).where(User.username == user_data.username))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Username already taken")
 
     user = User(
         username=user_data.username,

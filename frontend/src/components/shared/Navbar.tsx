@@ -121,7 +121,17 @@ export default function Navbar() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm text-gray-700">{user?.username}</span>
+                  {user?.is_anonymous && (
+                    <span className="ml-1 text-xs font-medium text-amber-600">Guest</span>
+                  )}
                 </div>
+                {user?.is_anonymous && (
+                  <Link href="/register">
+                    <Button size="sm" variant="outline" className="text-teal-700">
+                      Create Account
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                   Logout
@@ -171,6 +181,15 @@ export default function Navbar() {
                     {link.label}
                   </button>
                 ))}
+                {user?.is_anonymous && (
+                  <button
+                    type="button"
+                    onClick={() => handleMobileNavClick("/register")}
+                    className="block w-full rounded px-3 py-2 text-left text-sm text-teal-700 hover:bg-teal-50"
+                  >
+                    Create Account
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

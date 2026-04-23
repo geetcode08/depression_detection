@@ -101,13 +101,17 @@ function tierAtLeast(current: DashboardTier, expected: DashboardTier): boolean {
 }
 
 function wordsUntilNextTier(words: number, tier: DashboardTier): number | null {
-  if (tier === "no_data") return Math.max(0, 50 - words);
-  if (tier === "sentiment_active") return Math.max(0, 150 - words);
-  if (tier === "emotions_active") return Math.max(0, 300 - words);
-  if (tier === "screening_active") return Math.max(0, 600 - words);
-  if (tier === "full_active") return Math.max(0, 1500 - words);
-  if (tier === "longitudinal") return Math.max(0, 4000 - words);
-  return null;
+  const thresholds: Partial<Record<DashboardTier, number>> = {
+    no_data: 50,
+    sentiment_active: 150,
+    emotions_active: 300,
+    screening_active: 600,
+    full_active: 1500,
+    longitudinal: 4000,
+  };
+  const target = thresholds[tier];
+  if (target === undefined) return null;
+  return Math.max(0, target - words);
 }
 
 function DashboardSkeleton() {
@@ -250,8 +254,8 @@ export default function DashboardPage() {
     if (!stats) {
       return false;
     }
-    return stats.dashboard_tier === "no_data" && stats.total_messages === 0;
-  }, [moodTrend, stats]);
+    return stats.total_messages === 0;
+  }, [stats]);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -325,33 +329,62 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {tierAtLeast(currentTier, "sentiment_active") && hasEnoughTrendData ? (
-          moodTrend && <MoodLineChart data={moodTrend} />
-        ) : (
+        {!tierAtLeast(currentTier, "sentiment_active") ? (
           <LockedCard
-            message="Start a conversation with Aura to unlock your wellbeing insights."
-            wordsNeeded={Math.max(0, 50 - (stats?.cumulative_words ?? 0))}
+            message="Keep talking with Aura to unlock your mood trend chart."
+            wordsNeeded={wordsUntilNextTier(stats?.cumulative_words ?? 0, currentTier) ?? 0}
           />
+        ) : !hasEnoughTrendData ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Mood & Risk Trend (30 days)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-500">
+                Chat on at least two different days to generate your trend chart.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          moodTrend && <MoodLineChart data={moodTrend} />
         )}
 
-        {tierAtLeast(currentTier, "emotions_active") && sentimentDist ? (
-          <SentimentPieChart data={sentimentDist} />
-        ) : (
+        {!tierAtLeast(currentTier, "emotions_active") ? (
           <LockedCard
             message="Emotion patterns unlock after a bit more sharing."
-            wordsNeeded={Math.max(0, 150 - (stats?.cumulative_words ?? 0))}
+            wordsNeeded={wordsUntilNextTier(stats?.cumulative_words ?? 0, currentTier) ?? 0}
           />
+        ) : !sentimentDist ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Sentiment Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-500">Not enough data yet for sentiment breakdown.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <SentimentPieChart data={sentimentDist} />
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {tierAtLeast(currentTier, "full_active") && behavior ? (
-          <RiskTrendChart data={behavior} />
-        ) : (
+        {!tierAtLeast(currentTier, "full_active") ? (
           <LockedCard
-            message="Keep chatting to unlock deeper trend insights."
-            wordsNeeded={Math.max(0, 600 - (stats?.cumulative_words ?? 0))}
+            message="Keep chatting to unlock deeper behavioural trend insights."
+            wordsNeeded={wordsUntilNextTier(stats?.cumulative_words ?? 0, currentTier) ?? 0}
           />
+        ) : !behavior ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Weekly Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-500">Behavioural data is loading...</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <RiskTrendChart data={behavior} />
         )}
 
         <Card>

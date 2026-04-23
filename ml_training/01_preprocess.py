@@ -23,7 +23,7 @@ nltk.download("stopwords", quiet=True)
 
 RAW_DIR = os.path.join(os.path.dirname(__file__), "data", "raw")
 PROCESSED_DIR = os.path.join(os.path.dirname(__file__), "data", "processed")
-MAX_SAMPLES = int(os.getenv("MAX_SAMPLES", "50000"))
+MAX_SAMPLES = int(os.getenv("MAX_SAMPLES", "150000"))
 USE_STEMMING = os.getenv("USE_STEMMING", "0") == "1"
 
 

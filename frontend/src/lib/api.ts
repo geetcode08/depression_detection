@@ -138,8 +138,8 @@ export const chatApi = {
     const res = await api.post<ChatResponse>("/chat/new-session");
     return res.data;
   },
-  endSession: async (sessionId: number): Promise<{ summary: string | null; message?: string }> => {
-    const res = await api.post<{ summary: string | null; message?: string }>(`/chat/end-session/${sessionId}`);
+  endSession: async (sessionId: number): Promise<{ summary: string | null }> => {
+    const res = await api.post<{ summary: string | null }>(`/chat/end-session/${sessionId}`);
     return res.data;
   },
 };

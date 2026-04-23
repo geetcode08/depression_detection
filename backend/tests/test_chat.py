@@ -40,6 +40,7 @@ async def test_new_session_returns_opener(client: AsyncClient, auth_headers: dic
     assert response.status_code == 200
     data = response.json()
     assert data["is_opener"] is True
+    assert data["crisis_alert"] is False
     assert data["reply"]
     assert data["analysis"]["analysis_tier"] == "gathering"
 
@@ -119,3 +120,21 @@ async def test_high_risk_message_returns_crisis_alert_only_full_tier(
     data = response.json()
     assert data["analysis"]["risk_label"] == "high"
     assert data["analysis"]["crisis_alert"] is True
+    assert data["crisis_alert"] is True
+
+
+@pytest.mark.asyncio
+async def test_crisis_alert_fires_in_early_tier(client: AsyncClient, auth_headers: dict):
+    """Crisis alert must fire even on first message if crisis language detected."""
+    with patch("routers.chat.get_llm_reply", new_callable=AsyncMock) as mock_llm:
+        mock_llm.return_value = "Please reach out to iCall."
+        resp = await client.post(
+            "/api/v1/chat/send",
+            json={"message": "I want to kill myself right now"},
+            headers=auth_headers,
+        )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["analysis"]["crisis_alert"] is True
+    assert data["crisis_alert"] is True

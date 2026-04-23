@@ -81,6 +81,7 @@ export interface SessionAnalysisResponse {
   avg_risk_score: number;
   dominant_risk_label: RiskLabel;
   message_count: number;
+  session_summary?: string | null;
 }
 
 export interface ChatMessage {
@@ -110,6 +111,7 @@ export interface ChatResponse {
   reply: string;
   session_id: number;
   is_opener: boolean;
+  crisis_alert: boolean;
   analysis: AnalysisResult;
   tier_just_unlocked?: string | null;
   tier_unlock_message?: string | null;

@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import RiskBadge from "@/components/chat/RiskBadge";
+import type { RiskLabel } from "@/types";
 import { Bot, User } from "lucide-react";
 
 interface MessageBubbleProps {
@@ -22,6 +24,12 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
     ["emotion_detected", "preliminary_screening", "full_assessment"].includes(
       message.analysis?.analysis_tier ?? ""
     );
+
+  const canShowAnalysisMeta =
+    !isUser &&
+    !isOpener &&
+    Boolean(message.analysis) &&
+    message.analysis?.analysis_tier !== "gathering";
 
   const emotionStyleMap: Record<string, string> = {
     frustrated: "bg-amber-100 text-amber-800",
@@ -80,6 +88,23 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             </Badge>
           )}
         </div>
+
+        {canShowAnalysisMeta && (
+          <div className="mt-1 flex flex-wrap gap-1 px-1">
+            {message.analysis?.emotion_label && (
+              <span className="rounded-full border border-teal-100 bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
+                {message.analysis.emotion_label}
+              </span>
+            )}
+            {message.analysis?.risk_label && (
+              <RiskBadge
+                label={message.analysis.risk_label as RiskLabel}
+                score={message.analysis.risk_score ?? undefined}
+                className="text-[10px]"
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -19,6 +19,7 @@
 | is_anonymous | BOOLEAN | DEFAULT FALSE |
 | consent_given | BOOLEAN | DEFAULT FALSE |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP |
+| cumulative_words | INTEGER | NOT NULL, DEFAULT 0 |
 
 ### 2. `chat_sessions`
 | Column | Type | Constraints |
@@ -28,6 +29,10 @@
 | started_at | DATETIME | DEFAULT CURRENT_TIMESTAMP |
 | ended_at | DATETIME | NULLABLE |
 | total_messages | INTEGER | DEFAULT 0 |
+| total_user_words | INTEGER | NOT NULL, DEFAULT 0 |
+| session_summary | TEXT | NULLABLE |
+| analysis_tier_reached | VARCHAR(30) | NOT NULL, DEFAULT 'gathering' |
+| opener_message_id | INTEGER | FOREIGN KEY -> messages.id, NULLABLE |
 
 ### 3. `messages`
 | Column | Type | Constraints |

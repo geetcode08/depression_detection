@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from config import settings
-from database import engine, Base
+from database import engine, Base, async_session
 from services.nlp_service import load_ml_models
 
 logging.basicConfig(
@@ -16,6 +16,17 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+async def _check_required_schema_columns() -> None:
+    async with async_session() as db:
+        try:
+            await db.execute(text("SELECT cumulative_words FROM users LIMIT 1"))
+        except Exception:
+            logger.critical(
+                "SCHEMA ERROR: 'cumulative_words' column missing. "
+                "Run 'alembic upgrade head' before starting the server."
+            )
 
 
 async def _repair_legacy_sqlite_schema_if_needed() -> None:
@@ -63,6 +74,7 @@ async def lifespan(app: FastAPI):
         import models  # noqa: F401
         await conn.run_sync(Base.metadata.create_all)
     await _repair_legacy_sqlite_schema_if_needed()
+    await _check_required_schema_columns()
     logger.info("Database tables created/verified")
 
     # Load ML models
@@ -125,3 +137,8 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.on_event("startup")
+async def check_schema() -> None:
+    await _check_required_schema_columns()

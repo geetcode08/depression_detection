@@ -54,8 +54,8 @@ HUGGINGFACE_EMOTION_CONFIG = {
 
 ML_CLASSIFIER_CONFIG = {
     "context_window_messages": 5,
-    "minimum_words_for_inference": 30,
-    "score_dampening_factor": 0.75,
+    "minimum_words_for_inference": 15,
+    "score_dampening_factor": 0.85,
     "false_positive_keywords": [
         "hate",
         "kill",
@@ -71,7 +71,7 @@ ML_CLASSIFIER_CONFIG = {
         "destroyed",
         "broken",
     ],
-    "false_positive_dampening": 0.6,
+    "false_positive_dampening": 0.7,
     "prepend_time_context": True,
     "smoothing_window": 3,
 }
@@ -452,5 +452,5 @@ def analyze_text(text: str) -> AnalysisResult:
         confidence=round(confidence, 4) if confidence is not None else 0.0,
         emotion_label=None,
         analysis_tier="full_assessment",
-        crisis_alert=has_crisis_language(text) and safe_risk >= 0.65,
+        crisis_alert=has_crisis_language(text),
     )

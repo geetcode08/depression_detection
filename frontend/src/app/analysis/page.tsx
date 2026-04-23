@@ -173,6 +173,12 @@ export default function AnalysisPage() {
               <p>Avg sentiment: {sessionSummary.avg_sentiment.toFixed(2)}</p>
               <p>Avg risk: {(sessionSummary.avg_risk_score * 100).toFixed(0)}%</p>
               <p>Dominant risk: {sessionSummary.dominant_risk_label}</p>
+              {sessionSummary.session_summary && (
+                <div className="mt-2 rounded-lg border border-teal-100 bg-teal-50 p-3">
+                  <p className="mb-1 text-xs font-medium text-teal-700">Session Summary</p>
+                  <p className="text-sm italic text-gray-700">{sessionSummary.session_summary}</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

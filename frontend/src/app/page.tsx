@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ConsentModal from "@/components/shared/ConsentModal";
 import { useUserStore } from "@/store/userStore";
+import { toast } from "@/lib/toast";
 import {
   Heart,
   MessageCircle,
@@ -44,7 +45,7 @@ const features = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const { isAuthenticated, consentGiven, giveConsent } = useUserStore();
+  const { isAuthenticated, consentGiven, giveConsent, startAnonymous } = useUserStore();
   const [showConsent, setShowConsent] = useState(false);
 
   const handleGetStarted = () => {
@@ -72,7 +73,12 @@ export default function LandingPage() {
   };
 
   const handleContinueAsGuest = async () => {
-    router.push("/login");
+    try {
+      await startAnonymous();
+      router.push("/consent?next=%2Fchat");
+    } catch {
+      toast.error("Could not start guest session. Please try again.");
+    }
   };
 
   return (

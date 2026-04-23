@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models.user import User
 from models.message import Message
+from models.session import ChatSession
 from schemas.analysis import AnalysisRequest, AnalysisResult, AnalysisHistoryItem, SessionAnalysisResponse
 from services.auth_service import get_current_user, require_consent
 from services.nlp_service import analyze_text
@@ -91,6 +92,17 @@ async def get_session_analysis(
     label_counts = Counter(risk_labels)
     dominant_label = label_counts.most_common(1)[0][0] if label_counts else "low"
 
+    session_result = await db.execute(
+        select(ChatSession).where(
+            and_(
+                ChatSession.id == session_id,
+                ChatSession.user_id == current_user.id,
+            )
+        )
+    )
+    session_obj = session_result.scalar_one_or_none()
+    session_summary_text = session_obj.session_summary if session_obj else None
+
     return SessionAnalysisResponse(
         session_id=session_id,
         total_messages=len(messages),
@@ -98,4 +110,5 @@ async def get_session_analysis(
         avg_risk_score=round(avg_risk, 4),
         dominant_risk_label=dominant_label,
         message_count=len(messages),
+        session_summary=session_summary_text,
     )

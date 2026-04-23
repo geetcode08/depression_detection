@@ -11,7 +11,10 @@ import sys
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -40,22 +43,51 @@ def main():
             sys.exit(1)
 
     df = pd.read_csv(data_path)
-    model = joblib.load(model_path)
-    vectorizer = joblib.load(vectorizer_path)
+    _ = joblib.load(model_path)
+    _ = joblib.load(vectorizer_path)
 
     X = df["cleaned_text"]
     y = df["label"]
 
-    # Use same split as training
-    _, X_test, _, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    X_test_tfidf = vectorizer.transform(X_test)
+    pipeline = Pipeline(
+        [
+            (
+                "tfidf",
+                TfidfVectorizer(
+                    max_features=15000,
+                    ngram_range=(1, 2),
+                    sublinear_tf=True,
+                    min_df=3,
+                    max_df=0.90,
+                    strip_accents="unicode",
+                    analyzer="word",
+                ),
+            ),
+            (
+                "logreg",
+                LogisticRegression(
+                    C=0.5,
+                    class_weight="balanced",
+                    solver="lbfgs",
+                    max_iter=1000,
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
 
-    # Predictions
-    y_pred = model.predict(X_test_tfidf)
-    y_prob = model.predict_proba(X_test_tfidf)[:, 1]
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv_scores = cross_val_score(pipeline, X_train, y_train, cv=skf, scoring="roc_auc")
+    print(f"\nCV AUC: {cv_scores.mean():.4f} +- {cv_scores.std():.4f}")
+
+    pipeline.fit(X_train, y_train)
+
+    y_pred = pipeline.predict(X_test)
+    y_prob = pipeline.predict_proba(X_test)[:, 1]
 
     # Metrics
     accuracy = accuracy_score(y_test, y_pred)
@@ -69,6 +101,7 @@ def main():
 
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred, target_names=["No Depression", "Depression"]))
+    print(f"Test AUC: {roc_auc:.4f}")
 
     print("Confusion Matrix:")
     print(cm)

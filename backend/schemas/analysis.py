@@ -41,3 +41,4 @@ class SessionAnalysisResponse(BaseModel):
     avg_risk_score: float
     dominant_risk_label: str
     message_count: int
+    session_summary: Optional[str] = None

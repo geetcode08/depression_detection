@@ -9,7 +9,7 @@ All endpoints return JSON. Protected endpoints require: `Authorization: Bearer <
 ### POST /auth/register
 **Body:** `{ username: string, email: string, password: string }`
 **Response:** `{ id: int, username: string, email: string }`
-**Notes:** Password hashed with `pbkdf2_sha256` via passlib. Returns 400 if email/username taken.
+**Notes:** Password hashed with `pbkdf2_sha256` via passlib. Returns 409 if email/username taken.
 
 ### POST /auth/login
 **Body:** OAuth2 form data: `username=<email>&password=<password>` (`application/x-www-form-urlencoded`)
@@ -38,6 +38,7 @@ All endpoints return JSON. Protected endpoints require: `Authorization: Bearer <
 {
   "reply": "string",
   "session_id": 123,
+  "is_opener": false,
   "crisis_alert": true,
   "analysis": {
     "sentiment_score": -0.45,
@@ -52,6 +53,25 @@ All endpoints return JSON. Protected endpoints require: `Authorization: Bearer <
 ```
 **Notes:** If no `session_id`, creates new session. `crisis_alert` is returned both top-level and in `analysis` for frontend compatibility.
 
+### POST /chat/new-session
+**Protected.**
+**Response:**
+```json
+{
+  "reply": "string",
+  "session_id": 123,
+  "is_opener": true,
+  "crisis_alert": false,
+  "analysis": {
+    "analysis_tier": "gathering"
+  }
+}
+```
+
+### POST /chat/end-session/{session_id}
+**Protected.**
+**Response:** `{ "summary": string | null, "message"?: string }`
+
 ## Analysis
 
 ### POST /analyze
@@ -63,6 +83,18 @@ All endpoints return JSON. Protected endpoints require: `Authorization: Bearer <
 
 ### GET /analyze/session/{session_id}
 **Protected.** Returns aggregated analysis for a specific chat session.
+**Response:**
+```json
+{
+  "session_id": 123,
+  "total_messages": 7,
+  "avg_sentiment": -0.14,
+  "avg_risk_score": 0.43,
+  "dominant_risk_label": "medium",
+  "message_count": 7,
+  "session_summary": "string | null"
+}
+```
 
 ## Recommendations
 
@@ -85,7 +117,7 @@ All endpoints return JSON. Protected endpoints require: `Authorization: Bearer <
 ## Dashboard
 
 ### GET /dashboard/stats
-**Response:** `{ total_messages: int, avg_sentiment_7d: float, avg_risk_7d: float, current_streak_days: int }`
+**Response:** `{ total_messages: int, avg_sentiment_7d: float, avg_risk_7d: float, current_streak_days: int, cumulative_words: int, dashboard_tier: string }`
 
 ### GET /dashboard/mood?days=30
 **Response:** `{ dates: string[], sentiment_scores: float[], risk_scores: float[] }`

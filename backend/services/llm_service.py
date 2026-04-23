@@ -206,7 +206,7 @@ include the crisis resources. Do not be abrupt. Lead with warmth first.
     api_messages.extend(history)
     api_messages.append({"role": "user", "content": message})
 
-    print(f"[Aura] Sending {len(api_messages)} messages to Groq")
+    logger.info("Sending %d messages to Groq", len(api_messages))
 
     try:
         return await _call_with_fallbacks(

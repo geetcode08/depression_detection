@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from collections import Counter
+import logging
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.message import Message
 from models.mood_log import MoodLog
 from models.user import User
+
+logger = logging.getLogger(__name__)
 
 
 def _get_dashboard_tier(cumulative_words: int) -> str:
@@ -122,7 +125,11 @@ async def get_dashboard_stats(db: AsyncSession, user_id: int) -> dict:
 
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
-    cumulative_words = int(user.cumulative_words or 0) if user else 0
+    try:
+        cumulative_words = int(user.cumulative_words or 0) if user else 0
+    except AttributeError:
+        logger.error("cumulative_words column missing from users table. Run: alembic upgrade head")
+        cumulative_words = 0
 
     return {
         "total_messages": total_messages,

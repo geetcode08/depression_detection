@@ -4,49 +4,27 @@
 This document provides continuity between AI development sessions. Update at the END of every session.
 
 ## Last Session Summary
-- **Date**: 2026-03-23 (Session 2)
-- **Agent**: GitHub Copilot (Claude Haiku 4.5)
-- **Work Done**: 
-  - **Reconstructed TODO List**: Analyzed gaps from Phase 1-6, created comprehensive Phase 7 tracking
-  - **Phase 7.1 - Pre-Deployment Verification**: ✅ COMPLETED
-    - Environment variable setup verification (`.env` templates, `.gitignore`)
-    - Security audit: No hardcoded secrets found
-    - Configuration management review (backend config.py, frontend api.ts)
-    - Created comprehensive verification report: `docs/pre_deployment_verification.md`
-  - **Phase 7.2 - Local Runtime Docs**: ✅ COMPLETED
-    - Added local-first run instructions for backend and frontend
-    - Documented local validation commands and troubleshooting
-  - **Phase 7.3 - Frontend Testing**: ✅ COMPLETED
-    - Set up Vitest with React Testing Library configuration
-    - Created tests: `navbar.test.tsx`, `api.test.ts`, `store.test.ts`
-    - Added test scripts to `package.json` (test, test:ui, test:coverage)
-    - Created comprehensive guide: `docs/frontend_testing.md`
-  - **Phase 7.4 - CI/CD Pipeline**: ✅ COMPLETED
-    - Created GitHub Actions workflows:
-      - `backend-tests.yml`: Python 3.11, pytest, flake8 linting, coverage upload
-      - `frontend-tests.yml`: Node.js 20, ESLint, Vitest, Next.js build, artifact upload
-      - `fullstack-tests.yml`: Combined testing, code analysis, security checks, summary job
-    - Set up Codecov integration for coverage reporting
-    - Added security checks (hardcoded secrets scan)
-    - Created comprehensive guide: `docs/ci_cd_pipeline.md`
-  - **Phase 7.5 - Deployment Target Documentation**: ✅ COMPLETED
-    - Comprehensive Render backend deployment guide (PostgreSQL, Web Service setup)
-    - Comprehensive Vercel frontend deployment guide (custom domains, environment setup)
-    - Database configuration options (PostgreSQL recommended, SQLite fallback)
-    - Monitoring and logging setup (Render logs, Vercel logs, Uptimerobot)
-    - Cost estimation ($0-34/month depending on tier)
-    - Troubleshooting and rollback procedures
-    - Updated `docs/deployment.md` with full production deployment guide
-  - **Project Tracking**: Created `TODO.md` with all phases (1-7) status and priority ordering
-  - **Git Workflow**: Committed 9ad3ae3 with Phase 7 documentation, pushed to origin/main
+- **Date**: 2026-04-23 (Session 3)
+- **Agent**: GitHub Copilot (GPT-5.3-Codex)
+- **Work Done**:
+  - Fixed dashboard unlock rendering so tier gating and data sufficiency are handled independently.
+  - Added tier-relative progress bar behavior in `AnalysisProgress`.
+  - Fixed chat crisis alert behavior to trigger from explicit crisis language in all tiers.
+  - Added top-level `crisis_alert` in backend `ChatResponse` schema and router returns (new-session/send opener/send reply).
+  - Added auth duplicate username check and standardized duplicate conflicts to HTTP 409.
+  - Added defensive `cumulative_words` handling and startup schema warning for missing column.
+  - Extended session analysis API to include `session_summary`; surfaced this on the frontend analysis page.
+  - Wired chat `end-session` to the frontend "New conversation" flow with optional summary toast.
+  - Added assistant analysis chips in chat bubbles (emotion + risk, excluding gathering tier).
+  - Completed guest flow wiring from landing page using `startAnonymous` and consent redirect.
+  - Updated ML scripts/configs (sample cap 150k, TF-IDF 15k with bigrams, balanced LR C=0.5, CV/Test AUC eval).
+  - Updated backend/frontend contracts and required docs (`database_schema`, `api_contracts`, `feature_registry`, `session_context`).
 
 ## Current State
-- **Backend**: Implemented, tested (29 passed), local-run ready, CI/CD ready
-- **Frontend**: Implemented, tested (Vitest configured), local-run ready, CI/CD ready
-- **ML Models**: Artifacts generated and integrated (91% accuracy, in `backend/ml/`)
-- **Database**: Schema defined; SQLite for dev, PostgreSQL recommended for prod
-- **Deployment**: All Phase 7 documentation complete; ready for execution
-- **Git**: Clean working tree; committed 9ad3ae3 with Phase 7 work
+- **Backend**: Critical safety + auth + schema-contract fixes applied; tests pending run in this session.
+- **Frontend**: Dashboard/chat/analysis/guest/navbar wiring fixes applied; production build pending run in this session.
+- **ML**: Training/evaluation scripts updated for stronger features and AUC-centric validation.
+- **Docs**: Core API/database/feature/session context docs synchronized with code changes.
 
 ## What Needs Attention
 1. **Deploy to Production**: Execute Render backend and Vercel frontend deployment

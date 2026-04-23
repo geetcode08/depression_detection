@@ -9,6 +9,21 @@ interface AnalysisProgressProps {
   totalWords: number;
 }
 
+function getTierProgress(totalWords: number, tier: DashboardTier): number {
+  const ranges: Record<DashboardTier, [number, number]> = {
+    no_data: [0, 50],
+    sentiment_active: [50, 150],
+    emotions_active: [150, 300],
+    screening_active: [300, 600],
+    full_active: [600, 1500],
+    longitudinal: [1500, 4000],
+    behavioral: [4000, 4000],
+  };
+  const [start, end] = ranges[tier] ?? [0, 4000];
+  if (end === start) return 100;
+  return Math.min(100, Math.max(5, ((totalWords - start) / (end - start)) * 100));
+}
+
 const tierMessages: Record<
   DashboardTier,
   {
@@ -42,7 +57,8 @@ const tierMessages: Record<
   full_active: {
     label: "Full picture available",
     message: "Your analysis is complete. Keep talking to track changes over time.",
-    cta: (_, totalWords) => `${Math.max(0, 1500 - totalWords)} more words to unlock pattern tracking`,
+    cta: (wordsUntilNext) =>
+      wordsUntilNext ? `${wordsUntilNext} more words to unlock pattern tracking` : null,
   },
   longitudinal: {
     label: "Tracking your journey",
@@ -69,7 +85,7 @@ export default function AnalysisProgress({ currentTier, wordsUntilNext, totalWor
         <div className="h-2 w-full rounded-full bg-slate-100">
           <div
             className="h-2 rounded-full bg-gradient-to-r from-cyan-500 via-teal-400 to-lime-400 transition-all duration-500"
-            style={{ width: `${Math.min(100, Math.max(5, (totalWords / 4000) * 100))}%` }}
+            style={{ width: `${getTierProgress(totalWords, currentTier)}%` }}
           />
         </div>
         <p className="mt-3 text-sm text-slate-600">{copy.message}</p>

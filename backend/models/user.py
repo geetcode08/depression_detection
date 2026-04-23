@@ -16,7 +16,7 @@ class User(Base):
     is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
     consent_given: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    cumulative_words: Mapped[int] = mapped_column(Integer, default=0)
+    cumulative_words: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
 
     sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="user", cascade="all, delete-orphan")

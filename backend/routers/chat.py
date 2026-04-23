@@ -17,6 +17,7 @@ from schemas.chat import ChatRequest, ChatResponse
 from services import llm_service, nlp_service
 from services.auth_service import get_current_user
 from services.behavioral_service import aggregate_daily_mood
+from services.nlp_service import has_crisis_language
 
 logger = logging.getLogger("chat_router")
 router = APIRouter(tags=["chat"])
@@ -171,6 +172,7 @@ async def start_new_session(
         reply=opener,
         session_id=session.id,
         is_opener=True,
+        crisis_alert=False,
         analysis=AnalysisResult(analysis_tier="gathering"),
     )
 
@@ -206,6 +208,7 @@ async def send_message(
                 reply=opener,
                 session_id=session.id,
                 is_opener=True,
+                crisis_alert=False,
                 analysis=AnalysisResult(analysis_tier="gathering"),
             )
     else:
@@ -240,11 +243,16 @@ async def send_message(
         previous_scores=previous_scores,
     )
 
-    if analysis.analysis_tier == "full_assessment" and analysis.risk_label == "high":
+    crisis_by_language = has_crisis_language(text)
+    crisis_by_ml = (
+        analysis.analysis_tier == "full_assessment"
+        and analysis.risk_label == "high"
+    )
+    if crisis_by_language or crisis_by_ml:
         analysis.crisis_alert = True
 
     conversation_history = await _get_conversation_history(session.id, current_user.id, db)
-    crisis_mode = analysis.analysis_tier == "full_assessment" and analysis.risk_label == "high"
+    crisis_mode = crisis_by_language or crisis_by_ml
     reply_text = await get_llm_reply(
         user_message=text,
         history=conversation_history,
@@ -285,6 +293,7 @@ async def send_message(
     return ChatResponse(
         reply=reply_text,
         session_id=session.id,
+        crisis_alert=analysis.crisis_alert,
         analysis=analysis,
         tier_just_unlocked=tier_just_unlocked,
         tier_unlock_message=tier_unlock_message,

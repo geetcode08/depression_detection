@@ -83,15 +83,13 @@ export const useUserStore = create<UserState>()(
           const auth = await authApi.createAnonymous();
           localStorage.setItem(ACCESS_TOKEN_KEY, auth.access_token);
           setTokenCookie(auth.access_token);
-          const user = await authApi.getMe();
-
           set({
-            user,
             token: auth.access_token,
             isAuthenticated: true,
-            consentGiven: user.consent_given,
+            consentGiven: false,
             isLoading: false,
           });
+          await get().fetchUser();
         } catch (error) {
           set({ isLoading: false });
           throw error;
